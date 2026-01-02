@@ -1,0 +1,161 @@
+.health-screen {
+  padding: 40px 6%;
+  background: #f5f9fc;
+  min-height: 100vh;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.health-screen h1 {
+  text-align: center;
+  margin-bottom: 40px;
+  color: #03045e;
+}
+
+/* Cards */
+.health-card,
+.alerts-card {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  max-width: 700px;
+  margin: 0 auto 40px;
+  color: #03045e;
+}
+
+.health-card h2,
+.alerts-card h2 {
+  margin-bottom: 20px;
+  color: #0077b6;
+}
+
+/* Form */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #0077b6;
+  font-size: 1rem;
+  color: #03045e;
+}
+
+/* Sensitivity Buttons */
+.sensitivity-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.sensitivity-buttons button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  border: 1px solid #0077b6;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: bold;
+  color: #03045e;
+}
+
+.sensitivity-buttons button.active {
+  background: #0077b6;
+  color: #ffffff;
+}
+
+/* Risk Indicator */
+.risk-indicator {
+  padding: 15px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.risk-indicator.low {
+  background: #d8f3dc;
+  color: #1b4332;
+}
+
+.risk-indicator.medium {
+  background: #fff3bf;
+  color: #7f4f24;
+}
+
+.risk-indicator.high {
+  background: #ffe5e5;
+  color: #9d0208;
+}
+
+/* Alerts */
+.alerts-list {
+  list-style: none;
+  padding: 0;
+}
+
+.alerts-list li {
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+.guidelines-card {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  max-width: 700px;
+  margin: 0 auto 60px;
+  color: #03045e;
+}
+
+.guidelines-card h2 {
+  margin-bottom: 25px;
+  color: #0077b6;
+  text-align: center;
+}
+
+.guidelines-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.dos,
+.donts {
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.dos {
+  background: #e6f6fb;
+}
+
+.donts {
+  background: #ffe5e5;
+}
+
+.dos h3,
+.donts h3 {
+  margin-bottom: 15px;
+}
+
+.dos ul,
+.donts ul {
+  padding-left: 18px;
+}
+
+.dos li,
+.donts li {
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
