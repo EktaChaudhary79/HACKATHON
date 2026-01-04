@@ -1,0 +1,134 @@
+/* Parent wrapper */
+.feature-wrapper {
+  background: #03045e; /* dark blue background */
+  padding: 80px 6%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Feature Card Container */
+.feature-wrapper .feature-card {
+  background: #f0f8ff; /* very light blue */
+  border-radius: 28px;
+  padding: 60px;
+  margin-bottom: 60px;
+  display: flex;
+  align-items: center;
+  gap: 60px;
+  max-width: 1000px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+
+  /* Scroll animation default */
+  opacity: 0;
+  transform: translateY(60px);
+  transition: all 0.9s ease;
+}
+
+/* Scroll animation trigger */
+.feature-wrapper .feature-card.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Reverse layout */
+.feature-wrapper .feature-card.reverse {
+  flex-direction: row-reverse;
+}
+
+/* Hover animation */
+.feature-wrapper .feature-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 25px 60px rgba(0, 180, 216, 0.25);
+}
+
+/* Text */
+.feature-text {
+  flex: 1;
+  color: #03045e;
+}
+
+.feature-text h2 {
+  font-size: 32px;
+  margin-bottom: 15px;
+}
+
+.feature-text p {
+  font-size: 18px;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.feature-text ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.feature-text li {
+  margin-bottom: 10px;
+  padding-left: 22px;
+  position: relative;
+}
+
+.feature-text li::before {
+  content: "✔";
+  position: absolute;
+  left: 0;
+  color: #0077b6;
+}
+
+.desc {
+  color: #001f3f; 
+  font-weight: 500; 
+}
+
+/* Image */
+.feature-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.feature-image img {
+  width: 300px;
+  border-radius: 22px;
+  transition: transform 0.4s ease;
+}
+
+/* Image zoom on hover */
+.feature-wrapper .feature-card:hover img {
+  transform: scale(1.08);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .feature-wrapper .feature-card,
+  .feature-wrapper .feature-card.reverse {
+    flex-direction: column;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .feature-image img {
+    width: 240px;
+  }
+}
+.know-more-btn {
+  margin-top: 22px;
+  padding: 12px 28px;
+  border-radius: 30px;
+  border: none;
+  background: linear-gradient(135deg, #0077b6, #00b4d8);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.35s ease;
+  box-shadow: 0 8px 22px rgba(0, 180, 216, 0.35);
+}
+
+.know-more-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 14px 30px rgba(0, 180, 216, 0.45);
+}
