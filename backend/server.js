@@ -27,7 +27,7 @@ function extractState(stationName) {
    APP SETUP
 ========================= */
 const app = express();
-app.use(cors());
+app.use(cors()); // allow requests from other devices
 
 const PORT = 5001;
 
@@ -67,7 +67,6 @@ app.get("/aqi", async (req, res) => {
       pm25: data.components.pm2_5,
       pm10: data.components.pm10
     });
-
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: "Failed to fetch AQI" });
@@ -97,7 +96,6 @@ app.get("/aqi/india", async (req, res) => {
         aqi: item.aqi
       }))
     );
-
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: "Failed to fetch India AQI" });
@@ -105,7 +103,7 @@ app.get("/aqi/india", async (req, res) => {
 });
 
 /* =========================
-   STATE-WISE AQI (FAST & SAFE)
+   STATE-WISE AQI
 ========================= */
 app.get("/aqi/india/states", async (req, res) => {
   try {
@@ -138,7 +136,10 @@ app.get("/aqi/india/states", async (req, res) => {
       if (!isNaN(aqi)) {
         stateData[state].totalAQI += aqi;
         stateData[state].count += 1;
-        stateData[state].worstAQI = Math.max(stateData[state].worstAQI, aqi);
+        stateData[state].worstAQI = Math.max(
+          stateData[state].worstAQI,
+          aqi
+        );
       }
     });
 
@@ -153,12 +154,15 @@ app.get("/aqi/india/states", async (req, res) => {
     }
 
     res.json(result);
-
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: "Failed to fetch state-wise AQI" });
   }
 });
+
+/* =========================
+   CITY REGION AQI
+========================= */
 app.get("/aqi/city/regions", async (req, res) => {
   const city = req.query.name;
 
@@ -167,7 +171,6 @@ app.get("/aqi/city/regions", async (req, res) => {
   }
 
   try {
-    // 1️⃣ Search stations by city name
     const searchResponse = await axios.get(
       "https://api.waqi.info/search/",
       {
@@ -181,15 +184,14 @@ app.get("/aqi/city/regions", async (req, res) => {
     const stations = searchResponse.data.data;
 
     if (!stations || stations.length === 0) {
-      return res.status(404).json({ error: "No stations found for this city" });
+      return res
+        .status(404)
+        .json({ error: "No stations found for this city" });
     }
 
     const results = [];
+    const limitedStations = stations.slice(0, 8); // avoid rate limits
 
-    // 2️⃣ Limit stations to avoid rate limits (VERY IMPORTANT)
-    const limitedStations = stations.slice(0, 8);
-
-    // 3️⃣ Fetch details for each station
     for (const station of limitedStations) {
       const detailResponse = await axios.get(
         `https://api.waqi.info/feed/@${station.uid}/`,
@@ -217,17 +219,15 @@ app.get("/aqi/city/regions", async (req, res) => {
       city,
       regions: results
     });
-
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: "Failed to fetch city region AQI" });
   }
 });
 
-
 /* =========================
-   START SERVER (LAST LINE)
+   START SERVER
 ========================= */
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ Backend running on port ${PORT}`);
 });
