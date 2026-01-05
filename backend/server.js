@@ -27,10 +27,14 @@ function extractState(stationName) {
    APP SETUP
 ========================= */
 const app = express();
-app.use(cors()); // allow requests from other devices
+
+/* ✅ CORS — MUST be before routes */
+app.use(cors());
+
+/* Optional but recommended */
+app.use(express.json());
 
 const PORT = process.env.PORT || 5001;
-
 
 /* =========================
    TEST ROUTE
@@ -69,7 +73,7 @@ app.get("/aqi", async (req, res) => {
       pm10: data.components.pm10
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("AQI Error:", error.message);
     res.status(500).json({ error: "Failed to fetch AQI" });
   }
 });
@@ -98,7 +102,7 @@ app.get("/aqi/india", async (req, res) => {
       }))
     );
   } catch (error) {
-    console.error(error.message);
+    console.error("India AQI Error:", error.message);
     res.status(500).json({ error: "Failed to fetch India AQI" });
   }
 });
@@ -156,7 +160,7 @@ app.get("/aqi/india/states", async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    console.error(error.message);
+    console.error("State AQI Error:", error.message);
     res.status(500).json({ error: "Failed to fetch state-wise AQI" });
   }
 });
@@ -191,7 +195,7 @@ app.get("/aqi/city/regions", async (req, res) => {
     }
 
     const results = [];
-    const limitedStations = stations.slice(0, 8); // avoid rate limits
+    const limitedStations = stations.slice(0, 8);
 
     for (const station of limitedStations) {
       const detailResponse = await axios.get(
@@ -221,7 +225,7 @@ app.get("/aqi/city/regions", async (req, res) => {
       regions: results
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("City AQI Error:", error.message);
     res.status(500).json({ error: "Failed to fetch city region AQI" });
   }
 });
