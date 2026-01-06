@@ -19,3 +19,39 @@ h1 {
   margin-bottom: 20px;
   color: #0077b6;
 }
+.location-input-wrapper {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.location-input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.fetch-btn {
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: none;
+  background-color: #03045e;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.fetch-btn:hover {
+  background-color: #0077b6;
+}
+
+.status-text {
+  margin-top: 10px;
+  color: #333;
+}
+
+.status-text.error {
+  color: red;
+}

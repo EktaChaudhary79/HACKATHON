@@ -132,3 +132,33 @@
   transform: translateY(-3px) scale(1.05);
   box-shadow: 0 14px 30px rgba(0, 180, 216, 0.45);
 }
+/* ========================= */
+/* FEATURES SECTION HEADING */
+/* ========================= */
+
+.features-heading {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.features-heading h1 {
+  font-size: 42px;
+  font-weight: 700;
+  color: #ffffff; /* IMPORTANT: white text */
+  margin-bottom: 16px;
+}
+
+.features-heading p {
+  font-size: 18px;
+  color: #caf0f8;
+  max-width: 700px;
+  margin: 0 auto 24px;
+}
+
+.features-heading-line {
+  width: 80px;
+  height: 5px;
+  background: #00b4d8;
+  margin: 0 auto;
+  border-radius: 10px;
+}
