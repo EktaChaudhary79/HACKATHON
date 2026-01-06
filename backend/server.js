@@ -10,25 +10,8 @@ app.use(express.json());
 const PORT = process.env.PORT || 5001;
 
 /* =========================
-   UTILS
+   AQI CATEGORY
 ========================= */
-
-// Haversine distance (km)
-function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) ** 2;
-
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-}
-
-// AQI category
 function getAQICategory(aqi) {
   if (aqi <= 50) return "Good";
   if (aqi <= 100) return "Moderate";
@@ -39,7 +22,7 @@ function getAQICategory(aqi) {
 }
 
 /* =========================
-   WEATHER (DEFINED FIRST ✅)
+   WEATHER
 ========================= */
 async function getWeather(lat, lon) {
   const res = await axios.get(
@@ -57,7 +40,8 @@ async function getWeather(lat, lon) {
   return {
     temperature: res.data.main.temp,
     humidity: res.data.main.humidity,
-    windSpeed: res.data.wind.speed
+    windSpeed: res.data.wind.speed,
+    condition: res.data.weather[0].main
   };
 }
 
@@ -65,7 +49,6 @@ async function getWeather(lat, lon) {
    GEOCODING (ADDRESS → LAT/LON)
 ========================= */
 async function geocodeAddress(address) {
-  // 1️⃣ Try full address
   let res = await axios.get(
     "https://api.openweathermap.org/geo/1.0/direct",
     {
@@ -77,16 +60,16 @@ async function geocodeAddress(address) {
     }
   );
 
-  // 2️⃣ Fallback → city + India
+  // fallback → last word + India
   if (!res.data || res.data.length === 0) {
-    const words = address.split(" ");
-    const fallbackCity = words[words.length - 1];
+    const parts = address.split(" ");
+    const city = parts[parts.length - 1];
 
     res = await axios.get(
       "https://api.openweathermap.org/geo/1.0/direct",
       {
         params: {
-          q: `${fallbackCity},IN`,
+          q: `${city},IN`,
           limit: 5,
           appid: process.env.API_KEY
         }
@@ -113,7 +96,7 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   🔥 NEAREST AQI FOR ANY ADDRESS
+   🔥 AQI BY GEO LOCATION (CORRECT METHOD)
 ========================= */
 app.get("/aqi/nearest", async (req, res) => {
   const address = req.query.q;
@@ -124,69 +107,37 @@ app.get("/aqi/nearest", async (req, res) => {
 
   try {
     // 1️⃣ Address → Lat/Lon
-    const userLocation = await geocodeAddress(address);
+    const location = await geocodeAddress(address);
 
-    // 2️⃣ Get AQI stations in India
-    const stationsRes = await axios.get(
-      "https://api.waqi.info/map/bounds/",
+    // 2️⃣ AQI using GEO (THIS FIXES YOUR ISSUE)
+    const aqiRes = await axios.get(
+      `https://api.waqi.info/feed/geo:${location.lat};${location.lon}/`,
       {
         params: {
-          latlng: "6.554607,68.111378,35.674545,97.395561",
           token: process.env.WAQI_TOKEN
         }
       }
     );
 
-    const stations = stationsRes.data.data;
+    const aqiData = aqiRes.data.data;
 
-    // 3️⃣ Find nearest AQI station
-    let nearest = null;
-    let minDistance = Infinity;
-
-    stations.forEach(station => {
-      if (!station.lat || !station.lon) return;
-
-      const dist = getDistance(
-        userLocation.lat,
-        userLocation.lon,
-        station.lat,
-        station.lon
-      );
-
-      if (dist < minDistance && !isNaN(station.aqi)) {
-        minDistance = dist;
-        nearest = station;
-      }
-    });
-
-    if (!nearest) {
-      return res.status(404).json({ error: "No AQI station found" });
+    if (!aqiData || aqiData.aqi === "-" || aqiData.aqi == null) {
+      return res.status(404).json({ error: "AQI data not available" });
     }
 
-    // 4️⃣ Detailed AQI
-    const detailRes = await axios.get(
-      `https://api.waqi.info/feed/@${nearest.uid}/`,
-      {
-        params: { token: process.env.WAQI_TOKEN }
-      }
-    );
-
-    const aqiData = detailRes.data.data;
-
-    // 5️⃣ Weather
+    // 3️⃣ Weather
     const weather = await getWeather(
-      aqiData.city.geo[0],
-      aqiData.city.geo[1]
+      location.lat,
+      location.lon
     );
 
-    // 6️⃣ Response
+    // 4️⃣ Response
     res.json({
       searchedAddress: address,
-      resolvedLocation: userLocation.name,
+      resolvedLocation: location.name,
 
-      nearestStation: {
-        name: aqiData.city.name,
-        distance_km: minDistance.toFixed(2)
+      station: {
+        name: aqiData.city.name
       },
 
       aqi: {
@@ -207,8 +158,44 @@ app.get("/aqi/nearest", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Nearest AQI Error:", err.message);
+    console.error("AQI Error:", err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+app.get("/aqi/history", async (req, res) => {
+  try {
+    // 1️⃣ Read query params
+    const city = req.query.city;
+    const days = req.query.days || 7;
+
+    // 2️⃣ Validate input
+    if (!city) {
+      return res.status(400).json({
+        error: "City is required"
+      });
+    }
+
+    // 3️⃣ Mock historical data
+    const history = [
+      { date: "2025-12-30", aqi: 180 },
+      { date: "2025-12-31", aqi: 165 },
+      { date: "2026-01-01", aqi: 210 },
+      { date: "2026-01-02", aqi: 190 },
+      { date: "2026-01-03", aqi: 175 }
+    ];
+
+    // 4️⃣ Send structured response
+    res.json({
+      city,
+      days,
+      history
+    });
+
+  } catch (err) {
+    console.error("AQI History Error:", err.message);
+    res.status(500).json({
+      error: "Failed to fetch AQI history"
+    });
   }
 });
 
