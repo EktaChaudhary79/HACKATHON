@@ -1,0 +1,14 @@
+:root {
+  --prussian-blue: #000022;
+  --deep-navy: #001242;
+  --blue-green: #0094c6;
+  --baltic-blue: #005e7c;
+  --ink-black: #040f16;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background-color: var(--prussian-blue);
+  color: #e6edf3;
+}

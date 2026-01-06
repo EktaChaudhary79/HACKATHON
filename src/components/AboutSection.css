@@ -1,0 +1,68 @@
+/* src/components/AboutSection.css */
+
+.about-section {
+  background: #03045e;
+  padding: 80px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.about-card {
+  background: #f0f8ff;
+  width: 85%;
+  max-width: 1100px;
+  border-radius: 24px;
+  padding: 60px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.646);
+}
+
+.about-content h2 {
+  font-size: 36px;
+  color: #02065c;
+  margin-bottom: 16px;
+}
+
+.about-content p {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.about-content ul {
+  list-style: none;
+  padding: 0;
+}
+
+.about-content li {
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: #555;
+}
+.about-content h3 {
+  margin-top: 32px;
+  margin-bottom: 16px;
+  color: #02065c;
+}
+
+.about-footer {
+  margin-top: 30px;
+  font-size: 17px;
+  color: #444;
+}
+/* Scroll animation trigger */
+.feature-wrapper .feature-card.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Reverse layout */
+.feature-wrapper .feature-card.reverse {
+  flex-direction: row-reverse;
+}
+
+/* Hover animation */
+.feature-wrapper .feature-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 25px 60px rgba(0, 180, 216, 0.25);
+}

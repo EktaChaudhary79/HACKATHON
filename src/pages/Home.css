@@ -1,0 +1,128 @@
+/* ================= PAGE WRAPPER ================= */
+.home {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* ================= HERO SECTION ================= */
+.hero {
+  min-height: 90vh;
+  background: linear-gradient(
+    135deg,
+    var(--deep-navy),
+    var(--prussian-blue)
+  );
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.hero h1 {
+  font-size: 3.2rem;
+  margin-bottom: 10px;
+  color: #e6edf3;
+}
+
+.tagline {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  color: #9ccfe0;
+}
+
+.cta-btn {
+  padding: 14px 32px;
+  border-radius: 30px;
+  border: none;
+  font-size: 1rem;
+  font-weight: bold;
+  background-color: var(--blue-green);
+  color: var(--ink-black);
+  cursor: pointer;
+}
+
+/* ================= AQI FLOATING CARD ================= */
+.aqi-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: -65px;
+}
+
+.aqi-card {
+  width: 320px;
+  background-color: #0b1a33;
+  padding: 28px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+}
+
+.aqi-card h3 {
+  margin-bottom: 8px;
+  color: var(--baltic-blue);
+}
+
+.aqi-card h2 {
+  font-size: 3rem;
+  margin: 8px 0;
+  color: var(--blue-green);
+}
+
+.aqi-status {
+  font-weight: 600;
+  color: #9ccfe0;
+}
+
+.city {
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+
+/* ================= FEATURES SECTION ================= */
+.features {
+  padding: 100px 20px 80px;
+  background-color: var(--prussian-blue);
+  text-align: center;
+}
+
+.features h2 {
+  font-size: 2.3rem;
+  margin-bottom: 55px;
+  color: #e6edf3;
+}
+
+/* GRID — THIS FIXES THE BROKEN LAYOUT */
+.feature-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 32px;
+}
+
+.feature-card {
+  background-color: #0b1a33;
+  padding: 32px;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+}
+
+.feature-card h3 {
+  margin-bottom: 12px;
+  color: var(--blue-green);
+}
+
+.feature-card p {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
