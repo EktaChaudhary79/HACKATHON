@@ -1,102 +1,159 @@
-.aqi-dashboard {
-  background: #f5f9fc;
-  min-height: 100vh;
-  padding: 40px 6%;
-  font-family: "Segoe UI", sans-serif;
-  color: #03045e; /* default dark text */
+/* =============================== */
+/* GLOBAL THEME VARIABLES */
+/* =============================== */
+
+:root {
+  --primary: #0077b6;
+  --primary-soft: #e6f6fb;
+  --primary-light: #caf0f8;
+  --bg-main: #f5f9fc;
+  --card-bg: #ffffff;
+  --text-dark: #03045e;
+  --text-muted: #495057;
+  --border-soft: #cfeaf4;
 }
 
-/* Header */
+/* =============================== */
+/* BASE RESET */
+/* =============================== */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-main);
+  font-family: "Segoe UI", sans-serif;
+  color: var(--text-dark);
+}
+
+/* =============================== */
+/* MAIN DASHBOARD */
+/* =============================== */
+
+.aqi-dashboard {
+  min-height: 100vh;
+  padding: 40px 6%;
+}
+
+/* =============================== */
+/* HEADER */
+/* =============================== */
+
 .aqi-header {
   margin-bottom: 40px;
 }
 
 .aqi-header h1 {
   font-size: 32px;
-  color: #03045e; /* dark blue for clarity */
+  color: var(--text-dark);
 }
 
 .aqi-header p {
-  color: #1a1a1a; /* dark gray for better readability */
+  color: var(--text-muted);
   margin-top: 8px;
 }
 
-/* AQI Summary Card */
-.aqi-summary-card {
-  background: #e6f6fb;
-  border-radius: 28px;
-  padding: 40px;
-  text-align: center;
-  margin-bottom: 60px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+/* =============================== */
+/* INPUT + BUTTON */
+/* =============================== */
+
+.aqi-input-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin: 40px 0;
+  flex-wrap: wrap;
 }
 
-.aqi-summary-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.12);
+/* INPUT */
+.aqi-input {
+  width: 360px;
+  height: 56px;
+  padding: 0 20px;
+  font-size: 17px;
+  border-radius: 14px;
+  border: 1.8px solid var(--border-soft);
+  background: #ffffff;
+  color: var(--text-dark);
+  outline: none;
+  transition: border 0.25s ease, box-shadow 0.25s ease;
+}
+
+.aqi-input::placeholder {
+  color: #8d99ae;
+}
+
+.aqi-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(0, 119, 182, 0.18);
+}
+
+/* BUTTON */
+.aqi-btn {
+  height: 56px;
+  padding: 0 32px;
+  font-size: 17px;
+  font-weight: 600;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #0077b6, #0096c7);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 119, 182, 0.35);
+  transition: all 0.25s ease;
+}
+
+.aqi-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(0, 119, 182, 0.45);
+}
+
+.aqi-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* =============================== */
+/* SUMMARY CARD */
+/* =============================== */
+
+.aqi-summary-card {
+  background: var(--primary-soft);
+  border-radius: 24px;
+  padding: 48px;
+  text-align: center;
+  margin-bottom: 60px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.06);
 }
 
 .aqi-summary-card h2 {
-  color: #03045e;
+  color: var(--text-dark);
 }
 
 .aqi-value {
   font-size: 72px;
-  font-weight: bold;
-  color: #03045e; /* primary dark color for readability */
-  margin: 10px 0;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 12px 0;
 }
 
 .aqi-category {
-  background: #d9f2fb; /* light variant */
+  display: inline-block;
+  background: var(--primary-light);
   padding: 8px 18px;
   border-radius: 20px;
   font-weight: 600;
-  color: #03045e; /* dark text */
-}
-.aqi-bar-container {
-  margin: 30px 0;
+  color: var(--text-dark);
 }
 
-.aqi-bar {
-  width: 100%;
-  height: 24px;
-  display: flex;
-  border-radius: 12px;
-  overflow: hidden;
-}
+/* =============================== */
+/* AQI HORIZONTAL SCALE */
+/* =============================== */
 
-.aqi-bar div {
-  height: 100%;
-}
-
-
-.aqi-pointer {
-  position: absolute;
-  top: -8px;
-  transform: translateX(-50%);
-  font-weight: bold;
-  color: #03045e;
-  background: #ffffff;
-  border: 2px solid #03045e;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: left 1s ease;
-}
-
-.aqi-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 6px;
-  font-size: 14px;
-  color: #03045e;
-}
-/* AQI Horizontal Scale */
 .aqi-horizontal-scale {
   margin: 30px 0 60px 0;
 }
@@ -104,67 +161,74 @@
 .aqi-scale-bar {
   display: flex;
   width: 100%;
-  height: 30px;
-  border-radius: 15px;
+  height: 28px;
+  border-radius: 14px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
-/* Color Segments */
 .aqi-scale-bar > div {
   flex: 1;
-  height: 100%;
 }
 
-.aqi-good { background-color: #38b000; }        /* Green */
-.aqi-moderate { background-color: #ffdd00; }    /* Yellow */
-.aqi-poor { background-color: #ff9f00; }   /* Orange */
-.aqi-unhealthy { background-color: #ff0000; }   /* Red */
-.aqi-severe { background-color: #800080; } /* Purple */
-.aqi-hazardous { background-color: #660000; }   /* Dark Red */
+.aqi-good { background: #38b000; }
+.aqi-moderate { background: #ffdd00; }
+.aqi-poor { background: #ff9f00; }
+.aqi-unhealthy { background: #ff0000; }
+.aqi-severe { background: #800080; }
+.aqi-hazardous { background: #660000; }
 
-/* Pointer */
 .aqi-pointer {
   position: absolute;
   top: -10px;
   transform: translateX(-50%);
-  font-weight: bold;
-  color: #03045e;
   background: #ffffff;
-  border: 2px solid #03045e;
+  border: 2px solid var(--text-dark);
   border-radius: 50%;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: left 1s ease;
-  z-index: 2;
+  font-weight: 600;
+  color: var(--text-dark);
+  transition: left 0.8s ease;
 }
 
-/* Labels */
 .aqi-scale-labels {
   display: flex;
   justify-content: space-between;
   margin-top: 8px;
   font-size: 12px;
-  color: #03045e;
   font-weight: 600;
+  color: var(--text-dark);
 }
 
+/* =============================== */
+/* SECTION CONTAINER */
+/* =============================== */
 
-/* Section */
 .section {
   margin-bottom: 60px;
 }
 
 .section h2 {
   margin-bottom: 20px;
-  color: #03045e;
+  color: var(--text-dark);
 }
 
-/* Pollutants */
+.section-card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+}
+
+/* =============================== */
+/* POLLUTANTS */
+/* =============================== */
+
 .pollutant-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -174,30 +238,26 @@
 .pollutant-card {
   background: #ffffff;
   padding: 25px;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-  color: #03045e; /* text dark */
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .pollutant-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.1);
-  background: #f0f9ff; /* slight light highlight on hover */
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
 }
 
 .pollutant-value {
   font-size: 18px;
   margin: 8px 0;
-  color: #1a1a1a; /* dark for clarity */
+  color: #1a1a1a;
 }
 
-.pollutant-level {
-  font-size: 14px;
-  color: #333;
-}
+/* =============================== */
+/* WEATHER */
+/* =============================== */
 
-/* Weather */
 .weather-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -209,15 +269,13 @@
   padding: 20px;
   border-radius: 18px;
   text-align: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-  color: #03045e; /* dark text */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .weather-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.1);
-  background: #f0f9ff; /* subtle highlight */
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
 }
 
 .weather-card span {
