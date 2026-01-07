@@ -196,6 +196,9 @@ app.post("/chat", async (req, res) => {
 /* =========================
    START SERVER (RENDER SAFE)
 ========================= */
+const PORT = process.env.PORT || 5001;
+
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🤖 Chatbot server running on port ${PORT}`);
+  console.log(`Chatbot server running on port ${PORT}`);
 });
+
