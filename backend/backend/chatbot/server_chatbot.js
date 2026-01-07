@@ -13,13 +13,14 @@ app.use(express.json());
 const PORT = process.env.PORT || 5001;
 
 /* =========================
-   API KEYS CHECK
+   API KEYS
 ========================= */
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const WAQI_API_KEY = process.env.WAQI_API_KEY;
 
 if (!OPENWEATHER_API_KEY || !WAQI_API_KEY) {
   console.error("❌ Missing API keys");
+  process.exit(1);
 }
 
 /* =========================
@@ -199,5 +200,5 @@ app.post("/chat", async (req, res) => {
    START SERVER
 ========================= */
 app.listen(PORT, () => {
-  console.log(`Chatbot server running on port ${PORT}`);
+  console.log(`🤖 Chatbot server running on port ${PORT}`);
 });
