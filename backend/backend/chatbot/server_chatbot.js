@@ -7,12 +7,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = 5001;
+/* =========================
+   PORT (RENDER SAFE)
+========================= */
+const PORT = process.env.PORT || 5001;
+
+/* =========================
+   API KEYS CHECK
+========================= */
+const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
+const WAQI_API_KEY = process.env.WAQI_API_KEY;
+
+if (!OPENWEATHER_API_KEY || !WAQI_API_KEY) {
+  console.error("❌ Missing API keys");
+}
 
 /* =========================
    HELPERS
 ========================= */
-
 function category(aqi) {
   if (aqi <= 50) return "Good";
   if (aqi <= 100) return "Moderate";
@@ -37,12 +49,18 @@ function owAqiToReal(aqi) {
    OPENWEATHER AQI
 ========================= */
 async function fetchOpenWeather(lat, lon) {
-  const r = await axios.get(
+  const res = await axios.get(
     "https://api.openweathermap.org/data/2.5/air_pollution",
-    { params: { lat, lon, appid: process.env.API_KEY } }
+    {
+      params: {
+        lat,
+        lon,
+        appid: OPENWEATHER_API_KEY
+      }
+    }
   );
 
-  const d = r.data.list[0];
+  const d = res.data.list[0];
 
   return {
     aqi: owAqiToReal(d.main.aqi),
@@ -56,47 +74,45 @@ async function fetchOpenWeather(lat, lon) {
    WAQI AQI (NEAREST STATION)
 ========================= */
 async function fetchWAQI(lat, lon) {
-  const r = await axios.get(
-    "https://api.waqi.info/feed/geo:" + lat + ";" + lon + "/",
-    { params: { token: process.env.WAQI_TOKEN } }
+  const res = await axios.get(
+    `https://api.waqi.info/feed/geo:${lat};${lon}/`,
+    { params: { token: WAQI_API_KEY } }
   );
 
-  if (r.data.status !== "ok") return null;
+  if (res.data.status !== "ok") return null;
 
-  const d = r.data.data;
+  const d = res.data.data;
 
   return {
     aqi: d.aqi,
     pm25: d.iaqi?.pm25?.v ?? null,
     pm10: d.iaqi?.pm10?.v ?? null,
-    distance: d.city?.geo ? "nearest station" : "unknown",
     source: "WAQI"
   };
 }
 
 /* =========================
-   SMART AQI DECISION
+   SMART AQI PICKER
 ========================= */
 async function getBestAQI(lat, lon) {
+  try {
+    const waqi = await fetchWAQI(lat, lon);
+    if (waqi && waqi.aqi) {
+      return {
+        ...waqi,
+        category: category(waqi.aqi),
+        advice: advice(waqi.aqi),
+        confidence: "Ground station data (WAQI)"
+      };
+    }
+  } catch {}
+
   const ow = await fetchOpenWeather(lat, lon);
-  const waqi = await fetchWAQI(lat, lon);
-
-  // Prefer WAQI if available
-  if (waqi && waqi.aqi && waqi.aqi > 0) {
-    return {
-      ...waqi,
-      category: category(waqi.aqi),
-      advice: advice(waqi.aqi),
-      confidence: "Ground station data (WAQI)"
-    };
-  }
-
-  // Fallback to OpenWeather
   return {
     ...ow,
     category: category(ow.aqi),
     advice: advice(ow.aqi),
-    confidence: "Satellite + model data (OpenWeather)"
+    confidence: "Model + satellite data (OpenWeather)"
   };
 }
 
@@ -106,16 +122,20 @@ async function getBestAQI(lat, lon) {
 app.get("/aqi", async (req, res) => {
   const { lat, lon } = req.query;
 
+  if (!lat || !lon) {
+    return res.status(400).json({ error: "Missing latitude or longitude" });
+  }
+
   try {
     const data = await getBestAQI(lat, lon);
     res.json(data);
-  } catch (e) {
+  } catch (err) {
     res.status(500).json({ error: "Failed to fetch AQI" });
   }
 });
 
 /* =========================
-   CHATBOT
+   CHATBOT API
 ========================= */
 app.post("/chat", async (req, res) => {
   const { message, step, lat, lon } = req.body;
@@ -125,7 +145,9 @@ app.post("/chat", async (req, res) => {
     return res.json({
       reply:
         "Hi! What do you want to check?\n" +
-        "1. Air Quality\n2. Health advice\n3. Best time to go out",
+        "1. Air Quality\n" +
+        "2. Health advice\n" +
+        "3. Best time to go out",
       nextStep: "choose"
     });
   }
@@ -137,7 +159,8 @@ app.post("/chat", async (req, res) => {
       return res.json({
         reply:
           `AQI near you: ${data.aqi} (${data.category})\n` +
-          `PM2.5: ${data.pm25}\nPM10: ${data.pm10}\n` +
+          `PM2.5: ${data.pm25}\n` +
+          `PM10: ${data.pm10}\n` +
           `Source: ${data.source}\n` +
           `Confidence: ${data.confidence}`,
         nextStep: "choose"
@@ -172,7 +195,9 @@ app.post("/chat", async (req, res) => {
   });
 });
 
-/* ========================= */
+/* =========================
+   START SERVER
+========================= */
 app.listen(PORT, () => {
-  console.log("Server running on http://localhost:" + PORT);
+  console.log(`Chatbot server running on port ${PORT}`);
 });
