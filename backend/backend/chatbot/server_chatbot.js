@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 /* =========================
-   PORT (RENDER SAFE)
+   PORT (RENDER REQUIRED)
 ========================= */
 const PORT = process.env.PORT || 5001;
 
@@ -17,10 +17,6 @@ const PORT = process.env.PORT || 5001;
 ========================= */
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const WAQI_API_KEY = process.env.WAQI_API_KEY;
-
-if (!OPENWEATHER_API_KEY || !WAQI_API_KEY) {
-  console.error("❌ Missing API keys");
-}
 
 /* =========================
    HELPERS
@@ -92,7 +88,7 @@ async function fetchWAQI(lat, lon) {
 }
 
 /* =========================
-   SMART AQI PICKER
+   BEST AQI PICKER
 ========================= */
 async function getBestAQI(lat, lon) {
   try {
@@ -102,7 +98,7 @@ async function getBestAQI(lat, lon) {
         ...waqi,
         category: category(waqi.aqi),
         advice: advice(waqi.aqi),
-        confidence: "Ground station data (WAQI)"
+        confidence: "Ground station (WAQI)"
       };
     }
   } catch {}
@@ -112,7 +108,7 @@ async function getBestAQI(lat, lon) {
     ...ow,
     category: category(ow.aqi),
     advice: advice(ow.aqi),
-    confidence: "Model + satellite data (OpenWeather)"
+    confidence: "Model data (OpenWeather)"
   };
 }
 
@@ -121,21 +117,20 @@ async function getBestAQI(lat, lon) {
 ========================= */
 app.get("/aqi", async (req, res) => {
   const { lat, lon } = req.query;
-
   if (!lat || !lon) {
-    return res.status(400).json({ error: "Missing latitude or longitude" });
+    return res.status(400).json({ error: "Missing lat/lon" });
   }
 
   try {
     const data = await getBestAQI(lat, lon);
     res.json(data);
   } catch {
-    res.status(500).json({ error: "Failed to fetch AQI" });
+    res.status(500).json({ error: "AQI fetch failed" });
   }
 });
 
 /* =========================
-   CHATBOT API
+   CHATBOT
 ========================= */
 app.post("/chat", async (req, res) => {
   const { message, step, lat, lon } = req.body;
@@ -144,10 +139,10 @@ app.post("/chat", async (req, res) => {
   if (!step || step === "start") {
     return res.json({
       reply:
-        "Hi! What do you want to check?\n" +
+        "Hi! Choose an option:\n" +
         "1. Air Quality\n" +
-        "2. Health advice\n" +
-        "3. Best time to go out",
+        "2. Health Advice\n" +
+        "3. Best Time to Go Out",
       nextStep: "choose"
     });
   }
@@ -157,19 +152,14 @@ app.post("/chat", async (req, res) => {
 
     if (msg === "1") {
       return res.json({
-        reply:
-          `AQI: ${data.aqi} (${data.category})\n` +
-          `PM2.5: ${data.pm25}\n` +
-          `PM10: ${data.pm10}\n` +
-          `Source: ${data.source}\n` +
-          `Confidence: ${data.confidence}`,
+        reply: `AQI: ${data.aqi} (${data.category})`,
         nextStep: "choose"
       });
     }
 
     if (msg === "2") {
       return res.json({
-        reply: "Health advice: " + data.advice,
+        reply: data.advice,
         nextStep: "choose"
       });
     }
@@ -178,27 +168,19 @@ app.post("/chat", async (req, res) => {
       return res.json({
         reply:
           data.aqi <= 100
-            ? "You can go out anytime today."
-            : data.aqi <= 200
-            ? "Early morning or late evening is safer."
+            ? "You can go out safely."
             : "Avoid going out today.",
         nextStep: "choose"
       });
     }
   }
 
-  res.json({
-    reply: "Please choose 1, 2, or 3.",
-    nextStep: "choose"
-  });
+  res.json({ reply: "Choose 1, 2, or 3", nextStep: "choose" });
 });
 
 /* =========================
-   START SERVER (RENDER SAFE)
+   START SERVER (CRITICAL)
 ========================= */
-const PORT = process.env.PORT || 5001;
-
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Chatbot server running on port ${PORT}`);
+  console.log(`🤖 Chatbot running on port ${PORT}`);
 });
-
