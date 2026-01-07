@@ -19,7 +19,7 @@ const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const WAQI_API_KEY = process.env.WAQI_API_KEY;
 
 if (!OPENWEATHER_API_KEY || !WAQI_API_KEY) {
-  console.warn("⚠️ API keys missing. Set them in Render Environment Variables.");
+  console.error("❌ Missing API keys");
 }
 
 /* =========================
@@ -76,9 +76,7 @@ async function fetchOpenWeather(lat, lon) {
 async function fetchWAQI(lat, lon) {
   const res = await axios.get(
     `https://api.waqi.info/feed/geo:${lat};${lon}/`,
-    {
-      params: { token: WAQI_API_KEY }
-    }
+    { params: { token: WAQI_API_KEY } }
   );
 
   if (res.data.status !== "ok") return null;
@@ -157,24 +155,26 @@ app.post("/chat", async (req, res) => {
   if (step === "choose") {
     const data = await getBestAQI(lat, lon);
 
-    if (msg === "1" || msg.includes("air")) {
+    if (msg === "1") {
       return res.json({
         reply:
           `AQI: ${data.aqi} (${data.category})\n` +
-          `PM2.5: ${data.pm25}\nPM10: ${data.pm10}\n` +
-          `Source: ${data.source}`,
+          `PM2.5: ${data.pm25}\n` +
+          `PM10: ${data.pm10}\n` +
+          `Source: ${data.source}\n` +
+          `Confidence: ${data.confidence}`,
         nextStep: "choose"
       });
     }
 
-    if (msg === "2" || msg.includes("health")) {
+    if (msg === "2") {
       return res.json({
         reply: "Health advice: " + data.advice,
         nextStep: "choose"
       });
     }
 
-    if (msg === "3" || msg.includes("best")) {
+    if (msg === "3") {
       return res.json({
         reply:
           data.aqi <= 100
@@ -194,8 +194,8 @@ app.post("/chat", async (req, res) => {
 });
 
 /* =========================
-   START SERVER
+   START SERVER (RENDER SAFE)
 ========================= */
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🤖 Chatbot server running on port ${PORT}`);
 });
