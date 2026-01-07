@@ -1,6 +1,8 @@
 {
   "name": "aqi-health-chatbot",
   "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
   "main": "server_chatbot.js",
   "scripts": {
     "start": "node server_chatbot.js"
