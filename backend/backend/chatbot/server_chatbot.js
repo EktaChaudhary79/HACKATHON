@@ -19,8 +19,7 @@ const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const WAQI_API_KEY = process.env.WAQI_API_KEY;
 
 if (!OPENWEATHER_API_KEY || !WAQI_API_KEY) {
-  console.error("❌ Missing API keys");
-  process.exit(1);
+  console.warn("⚠️ API keys missing. Set them in Render Environment Variables.");
 }
 
 /* =========================
@@ -72,12 +71,14 @@ async function fetchOpenWeather(lat, lon) {
 }
 
 /* =========================
-   WAQI AQI (NEAREST STATION)
+   WAQI AQI
 ========================= */
 async function fetchWAQI(lat, lon) {
   const res = await axios.get(
     `https://api.waqi.info/feed/geo:${lat};${lon}/`,
-    { params: { token: WAQI_API_KEY } }
+    {
+      params: { token: WAQI_API_KEY }
+    }
   );
 
   if (res.data.status !== "ok") return null;
@@ -130,7 +131,7 @@ app.get("/aqi", async (req, res) => {
   try {
     const data = await getBestAQI(lat, lon);
     res.json(data);
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch AQI" });
   }
 });
@@ -159,11 +160,9 @@ app.post("/chat", async (req, res) => {
     if (msg === "1" || msg.includes("air")) {
       return res.json({
         reply:
-          `AQI near you: ${data.aqi} (${data.category})\n` +
-          `PM2.5: ${data.pm25}\n` +
-          `PM10: ${data.pm10}\n` +
-          `Source: ${data.source}\n` +
-          `Confidence: ${data.confidence}`,
+          `AQI: ${data.aqi} (${data.category})\n` +
+          `PM2.5: ${data.pm25}\nPM10: ${data.pm10}\n` +
+          `Source: ${data.source}`,
         nextStep: "choose"
       });
     }
@@ -176,15 +175,13 @@ app.post("/chat", async (req, res) => {
     }
 
     if (msg === "3" || msg.includes("best")) {
-      const time =
-        data.aqi <= 100
-          ? "You can go out anytime today."
-          : data.aqi <= 200
-          ? "Early morning or late evening is safer."
-          : "Avoid going out today.";
-
       return res.json({
-        reply: time,
+        reply:
+          data.aqi <= 100
+            ? "You can go out anytime today."
+            : data.aqi <= 200
+            ? "Early morning or late evening is safer."
+            : "Avoid going out today.",
         nextStep: "choose"
       });
     }
