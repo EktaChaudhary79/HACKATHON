@@ -125,6 +125,7 @@ app.post("/chat", async (req, res) => {
 });
 
 // ================= START =================
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Chatbot server running on port ${PORT}`);
 });
+
