@@ -6,7 +6,9 @@ const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const app = express();
-const PORT = 5001;
+
+/* 🔴 IMPORTANT FOR DEPLOYMENT */
+const PORT = process.env.PORT || 5001;
 
 console.log("SERVER FILE STARTED");
 
@@ -14,7 +16,7 @@ console.log("SERVER FILE STARTED");
    BASIC ROOT CHECK
 ========================= */
 app.get("/", (req, res) => {
-  res.send("Backend is running");
+  res.send("Health backend is running");
 });
 
 /* =========================
@@ -82,7 +84,13 @@ function generateAdvice(aqiLevel, age, disease, sensitivity) {
    MAIN API
 ========================= */
 app.get("/health-risk", async (req, res) => {
-  const { lat, lon, age = 25, disease = "none", sensitivity = "medium" } = req.query;
+  const {
+    lat,
+    lon,
+    age = 25,
+    disease = "none",
+    sensitivity = "medium"
+  } = req.query;
 
   if (!lat || !lon) {
     return res.json({ error: "Missing latitude or longitude" });
@@ -90,7 +98,8 @@ app.get("/health-risk", async (req, res) => {
 
   try {
     const url =
-      `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${process.env.OPENWEATHER_API_KEY}`;
+      `https://api.openweathermap.org/data/2.5/air_pollution` +
+      `?lat=${lat}&lon=${lon}&appid=${process.env.OPENWEATHER_API_KEY}`;
 
     const response = await fetch(url);
     const data = await response.json();
@@ -120,10 +129,8 @@ app.get("/health-risk", async (req, res) => {
 });
 
 /* =========================
-   THIS WAS MISSING
+   START SERVER
 ========================= */
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
-
-console.log("END OF FILE REACHED");
