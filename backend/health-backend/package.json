@@ -1,0 +1,15 @@
+{
+  "name": "health-backend",
+  "version": "1.0.0",
+  "description": "AQI Health Risk Backend",
+  "main": "server_old.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server_old.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  }
+}
