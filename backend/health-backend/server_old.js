@@ -1,27 +1,44 @@
+/**********************************
+ * ENV & IMPORTS
+ **********************************/
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
+const axios = require("axios");
 
-/* REQUIRED FOR FETCH IN NODE */
+// node-fetch dynamic import (safe for Node 18+)
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const app = express();
-
-/* 🔴 IMPORTANT FOR DEPLOYMENT */
 const PORT = process.env.PORT || 5001;
 
-console.log("SERVER FILE STARTED");
+/**********************************
+ * MIDDLEWARE
+ **********************************/
+app.use(cors());
+app.use(express.json());
 
-/* =========================
-   BASIC ROOT CHECK
-========================= */
+/**********************************
+ * API KEYS
+ **********************************/
+const WAQI_KEY = process.env.WAQI_API_KEY;
+const OPENWEATHER_KEY = process.env.OPENWEATHER_API_KEY;
+
+if (!WAQI_KEY || !OPENWEATHER_KEY) {
+  console.warn("⚠️ API keys missing. Server running in limited mode.");
+}
+
+/**********************************
+ * ROOT ROUTE (RENDER HEALTH CHECK)
+ **********************************/
 app.get("/", (req, res) => {
-  res.send("Health backend is running");
+  res.send("AQI Health Backend Running");
 });
 
-/* =========================
-   AQI LEVEL HELPER
-========================= */
+/**********************************
+ * HELPERS
+ **********************************/
 function getAQILevel(aqi) {
   if (aqi <= 50) return "Good";
   if (aqi <= 100) return "Moderate";
@@ -30,24 +47,18 @@ function getAQILevel(aqi) {
   return "Severe";
 }
 
-/* =========================
-   PERSONALISED ADVICE
-========================= */
 function generateAdvice(aqiLevel, age, disease, sensitivity) {
-  let reason =
-    `This health advisory is generated based on ${aqiLevel.toLowerCase()} air quality and your personal health profile.`;
-
+  let reason = `This health advisory is generated based on ${aqiLevel.toLowerCase()} air quality and your personal health profile.`;
   let explanation = "";
   let dos = [];
   let donts = [];
 
-  if (age < 12) {
-    explanation += "Children are more sensitive to air pollution. ";
-  } else if (age >= 60) {
-    explanation += "Older adults are more vulnerable to polluted air. ";
-  } else {
-    explanation += "Adults may tolerate mild pollution, but prolonged exposure can affect health. ";
-  }
+  if (age < 12)
+    explanation += "Children are especially sensitive to air pollution. ";
+  else if (age >= 60)
+    explanation += "Older adults face higher health risks from polluted air. ";
+  else
+    explanation += "Adults may tolerate mild pollution, but prolonged exposure can still affect health. ";
 
   if (disease === "asthma") {
     explanation += "Asthma increases the risk of breathing discomfort. ";
@@ -63,12 +74,12 @@ function generateAdvice(aqiLevel, age, disease, sensitivity) {
 
   if (disease === "allergy") {
     explanation += "Pollution can intensify allergy symptoms. ";
-    dos.push("Wear a mask in dusty environments.");
-    donts.push("Avoid allergen-heavy areas.");
+    dos.push("Wear a mask in dusty or pollen-heavy areas.");
+    donts.push("Avoid allergen-heavy zones.");
   }
 
   if (sensitivity === "high") {
-    explanation += "High sensitivity suggests symptoms may appear quickly.";
+    explanation += " High sensitivity suggests symptoms may appear quickly.";
   }
 
   if (aqiLevel === "Severe") {
@@ -80,57 +91,142 @@ function generateAdvice(aqiLevel, age, disease, sensitivity) {
   return { reason, explanation, dos, donts };
 }
 
-/* =========================
-   MAIN API
-========================= */
+/**********************************
+ * FETCH BEST AQI (WAQI → FALLBACK)
+ **********************************/
+async function fetchBestAQI(lat, lon) {
+  // 1️⃣ WAQI (nearest station)
+  try {
+    const waqiRes = await fetch(
+      `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${WAQI_KEY}`
+    );
+    const waqiJson = await waqiRes.json();
+
+    if (waqiJson.status === "ok" && waqiJson.data?.aqi) {
+      return {
+        aqi: waqiJson.data.aqi,
+        source: "WAQI",
+        station: waqiJson.data.city?.name || "Nearest WAQI station",
+      };
+    }
+  } catch (err) {
+    console.error("WAQI error:", err.message);
+  }
+
+  // 2️⃣ OpenWeather fallback
+  try {
+    const owRes = await fetch(
+      `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_KEY}`
+    );
+    const owJson = await owRes.json();
+
+    if (owJson.list?.length) {
+      return {
+        aqi: owJson.list[0].main.aqi * 50,
+        source: "OpenWeather",
+        station: "Model-based grid",
+      };
+    }
+  } catch (err) {
+    console.error("OpenWeather error:", err.message);
+  }
+
+  return null;
+}
+
+/**********************************
+ * GET: AI HEALTH ADVICE
+ **********************************/
 app.get("/health-risk", async (req, res) => {
-  const {
-    lat,
-    lon,
-    age = 25,
-    disease = "none",
-    sensitivity = "medium"
-  } = req.query;
+  const { lat, lon, age = 25, disease = "none", sensitivity = "medium" } = req.query;
 
   if (!lat || !lon) {
-    return res.json({ error: "Missing latitude or longitude" });
+    return res.status(400).json({ error: "Missing latitude or longitude" });
+  }
+
+  const aqiData = await fetchBestAQI(lat, lon);
+
+  if (!aqiData) {
+    return res.status(500).json({ error: "AQI data unavailable" });
+  }
+
+  const aqiLevel = getAQILevel(aqiData.aqi);
+  const advice = generateAdvice(aqiLevel, Number(age), disease, sensitivity);
+
+  res.json({
+    aqi: aqiData.aqi,
+    aqiLevel,
+    sourceUsed: aqiData.source,
+    stationUsed: aqiData.station,
+    reason: advice.reason,
+    explanation: advice.explanation,
+    dos: advice.dos,
+    donts: advice.donts,
+  });
+});
+
+/**********************************
+ * POST: HEALTH RISK ANALYSIS
+ **********************************/
+app.post("/health/analyze", async (req, res) => {
+  const { lat, lon, age = 25, condition = "none", sensitivity = "medium" } = req.body;
+
+  if (!lat || !lon) {
+    return res.status(400).json({ error: "Latitude and longitude required" });
   }
 
   try {
-    const url =
-      `https://api.openweathermap.org/data/2.5/air_pollution` +
-      `?lat=${lat}&lon=${lon}&appid=${process.env.OPENWEATHER_API_KEY}`;
-
-    const response = await fetch(url);
-    const data = await response.json();
-
-    const aqi = data.list[0].main.aqi * 50;
-    const aqiLevel = getAQILevel(aqi);
-
-    const advice = generateAdvice(
-      aqiLevel,
-      Number(age),
-      disease,
-      sensitivity
+    const aqiRes = await axios.get(
+      "https://api.openweathermap.org/data/2.5/air_pollution",
+      {
+        params: {
+          lat,
+          lon,
+          appid: OPENWEATHER_KEY,
+        },
+      }
     );
+
+    const aqi = aqiRes.data.list[0].main.aqi; // 1–5 scale
+
+    let score = 0;
+
+    if (aqi >= 4) score += 2;
+    else if (aqi === 3) score += 1;
+
+    if (age > 50) score += 2;
+    else if (age >= 30) score += 1;
+
+    if (condition === "heart") score += 2;
+    else if (condition === "asthma" || condition === "allergy") score += 1;
+
+    if (sensitivity === "high") score += 2;
+    else if (sensitivity === "medium") score += 1;
+
+    let riskLevel = "Low Risk";
+    if (score >= 6) riskLevel = "High Risk";
+    else if (score >= 3) riskLevel = "Moderate Risk";
 
     res.json({
       aqi,
-      aqiLevel,
-      reason: advice.reason,
-      explanation: advice.explanation,
-      dos: advice.dos,
-      donts: advice.donts
+      score,
+      riskLevel,
+      alerts: [
+        "Avoid outdoor travel during peak pollution hours",
+        "Wear a mask if AQI is poor",
+        "Prefer green and low-traffic routes",
+        "Stay hydrated and take breaks",
+      ],
     });
-  } catch (err) {
-    console.error(err);
-    res.json({ error: "Failed to fetch AQI data" });
+  } catch (error) {
+    console.error("Health analyze error:", error.message);
+    res.status(500).json({ error: "AQI analysis failed" });
   }
 });
 
-/* =========================
-   START SERVER
-========================= */
+/**********************************
+ * START SERVER
+ **********************************/
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
