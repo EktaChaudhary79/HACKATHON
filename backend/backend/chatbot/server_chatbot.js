@@ -1,20 +1,32 @@
+/***********************
+ * IMPORTS & CONFIG
+ ***********************/
 require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 
+/***********************
+ * APP INIT
+ ***********************/
 const app = express();
+
+// ✅ IMPORTANT: Render uses process.env.PORT
+const PORT = process.env.PORT || 5001;
+
 app.use(cors());
 app.use(express.json());
 
-// Render injects PORT automatically
-const PORT = process.env.PORT || 5001;
+/***********************
+ * HOME ROUTE
+ ***********************/
+app.get("/", (req, res) => {
+  res.send("Chatbot backend is running 🚀");
+});
 
-// ================= API KEYS =================
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
-const WAQI_API_KEY = process.env.WAQI_API_KEY;
-
-// ================= HELPERS =================
+/***********************
+ * HELPERS
+ ***********************/
 function category(aqi) {
   if (aqi <= 50) return "Good";
   if (aqi <= 100) return "Moderate";
@@ -32,134 +44,174 @@ function advice(aqi) {
 }
 
 function owAqiToReal(aqi) {
-  return { 1: 25, 2: 75, 3: 150, 4: 250, 5: 350 }[aqi];
+  const map = { 1: 25, 2: 75, 3: 150, 4: 250, 5: 350 };
+  return map[aqi] || null;
 }
 
-// ================= AQI FETCH =================
+/***********************
+ * OPENWEATHER AQI
+ ***********************/
 async function fetchOpenWeather(lat, lon) {
-  const res = await axios.get(
+  const response = await axios.get(
     "https://api.openweathermap.org/data/2.5/air_pollution",
     {
       params: {
         lat,
         lon,
-        appid: OPENWEATHER_API_KEY
+        appid: process.env.API_KEY
       }
     }
   );
 
-  const d = res.data.list[0];
+  const data = response.data.list[0];
+
   return {
-    aqi: owAqiToReal(d.main.aqi),
-    pm25: d.components.pm2_5,
-    pm10: d.components.pm10,
+    aqi: owAqiToReal(data.main.aqi),
+    pm25: data.components.pm2_5,
+    pm10: data.components.pm10,
     source: "OpenWeather"
   };
 }
 
+/***********************
+ * WAQI AQI
+ ***********************/
 async function fetchWAQI(lat, lon) {
-  const res = await axios.get(
+  const response = await axios.get(
     `https://api.waqi.info/feed/geo:${lat};${lon}/`,
     {
       params: {
-        token: WAQI_API_KEY
+        token: process.env.WAQI_TOKEN
       }
     }
   );
 
-  if (res.data.status !== "ok") return null;
+  if (response.data.status !== "ok") return null;
 
-  const d = res.data.data;
+  const data = response.data.data;
+
   return {
-    aqi: d.aqi,
-    pm25: d.iaqi?.pm25?.v ?? null,
-    pm10: d.iaqi?.pm10?.v ?? null,
+    aqi: data.aqi,
+    pm25: data.iaqi?.pm25?.v ?? null,
+    pm10: data.iaqi?.pm10?.v ?? null,
     source: "WAQI"
   };
 }
 
+/***********************
+ * SMART AQI SELECTION
+ ***********************/
 async function getBestAQI(lat, lon) {
-  try {
-    const waqi = await fetchWAQI(lat, lon);
-    if (waqi) {
-      return {
-        ...waqi,
-        category: category(waqi.aqi),
-        advice: advice(waqi.aqi)
-      };
-    }
-  } catch (err) {
-    console.log("WAQI failed, fallback to OpenWeather");
+  const ow = await fetchOpenWeather(lat, lon);
+  const waqi = await fetchWAQI(lat, lon);
+
+  if (waqi && waqi.aqi && waqi.aqi > 0) {
+    return {
+      ...waqi,
+      category: category(waqi.aqi),
+      advice: advice(waqi.aqi),
+      confidence: "Ground station data (WAQI)"
+    };
   }
 
-  const ow = await fetchOpenWeather(lat, lon);
   return {
     ...ow,
     category: category(ow.aqi),
-    advice: advice(ow.aqi)
+    advice: advice(ow.aqi),
+    confidence: "Satellite + model data (OpenWeather)"
   };
 }
 
-// ================= ROUTES =================
-app.get("/", (req, res) => {
-  res.send("AQI Chatbot Backend Running");
-});
-
+/***********************
+ * AQI API
+ ***********************/
 app.get("/aqi", async (req, res) => {
   const { lat, lon } = req.query;
 
   if (!lat || !lon) {
-    return res.status(400).json({ error: "Missing lat or lon" });
+    return res.status(400).json({ error: "Latitude and longitude required" });
   }
 
   try {
     const data = await getBestAQI(lat, lon);
     res.json(data);
-  } catch (err) {
+  } catch (error) {
+    console.error(error.message);
     res.status(500).json({ error: "Failed to fetch AQI" });
   }
 });
 
+/***********************
+ * CHATBOT API
+ ***********************/
 app.post("/chat", async (req, res) => {
-  const { message, lat, lon } = req.body;
-
-  if (!lat || !lon) {
-    return res.json({
-      reply: "Location is required to check air quality."
-    });
-  }
-
+  const { message, step, lat, lon } = req.body;
   const msg = (message || "").toLowerCase();
-  const data = await getBestAQI(lat, lon);
 
-  if (msg.includes("air")) {
-    return res.json({
-      reply: `Current AQI is ${data.aqi} (${data.category}) from ${data.source}.`
-    });
-  }
-
-  if (msg.includes("health")) {
-    return res.json({
-      reply: data.advice
-    });
-  }
-
-  if (msg.includes("best time")) {
+  if (!step || step === "start") {
     return res.json({
       reply:
-        data.aqi <= 100
-          ? "Morning hours are relatively safer."
-          : "Avoid going out unless necessary."
+        "Hi! What do you want to check?\n" +
+        "1. Air Quality\n" +
+        "2. Health advice\n" +
+        "3. Best time to go out",
+      nextStep: "choose"
     });
+  }
+
+  if (step === "choose") {
+    if (!lat || !lon) {
+      return res.json({
+        reply: "Please allow location access to continue.",
+        nextStep: "choose"
+      });
+    }
+
+    const data = await getBestAQI(lat, lon);
+
+    if (msg === "1" || msg.includes("air")) {
+      return res.json({
+        reply:
+          `AQI near you: ${data.aqi} (${data.category})\n` +
+          `PM2.5: ${data.pm25}\n` +
+          `PM10: ${data.pm10}\n` +
+          `Source: ${data.source}\n` +
+          `Confidence: ${data.confidence}`,
+        nextStep: "choose"
+      });
+    }
+
+    if (msg === "2" || msg.includes("health")) {
+      return res.json({
+        reply: "Health advice: " + data.advice,
+        nextStep: "choose"
+      });
+    }
+
+    if (msg === "3" || msg.includes("best")) {
+      const timeAdvice =
+        data.aqi <= 100
+          ? "You can go out anytime today."
+          : data.aqi <= 200
+          ? "Early morning or late evening is safer."
+          : "Avoid going out today.";
+
+      return res.json({
+        reply: timeAdvice,
+        nextStep: "choose"
+      });
+    }
   }
 
   res.json({
-    reply:
-      "Ask me about:\n• Air quality\n• Health advice\n• Best time to go out"
+    reply: "Please choose 1, 2, or 3.",
+    nextStep: "choose"
   });
 });
 
-// ================= START SERVER =================
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+/***********************
+ * START SERVER
+ ***********************/
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
