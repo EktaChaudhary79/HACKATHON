@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server_chatbot.js",
   "scripts": {
-    "start": "node server_chatbot.js"
+    "start": "node --max-old-space-size=256 server_chatbot.js"
   },
   "dependencies": {
     "axios": "^1.6.0",
