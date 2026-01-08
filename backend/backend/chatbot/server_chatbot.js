@@ -11,8 +11,11 @@ const cors = require("cors");
  ***********************/
 const app = express();
 
-// ✅ REQUIRED for Render
+// ✅ Render-required PORT
 const PORT = process.env.PORT || 5001;
+
+// ✅ IMPORTANT: Never use localhost in cloud
+const HOST = process.env.BASE_URL || "0.0.0.0";
 
 app.use(cors());
 app.use(express.json());
@@ -52,7 +55,7 @@ function owAqiToReal(aqi) {
  * OPENWEATHER AQI
  ***********************/
 async function fetchOpenWeather(lat, lon) {
-  const response = await axios.get(
+  const res = await axios.get(
     "https://api.openweathermap.org/data/2.5/air_pollution",
     {
       params: {
@@ -63,12 +66,12 @@ async function fetchOpenWeather(lat, lon) {
     }
   );
 
-  const data = response.data.list[0];
+  const d = res.data.list[0];
 
   return {
-    aqi: owAqiToReal(data.main.aqi),
-    pm25: data.components.pm2_5,
-    pm10: data.components.pm10,
+    aqi: owAqiToReal(d.main.aqi),
+    pm25: d.components.pm2_5,
+    pm10: d.components.pm10,
     source: "OpenWeather"
   };
 }
@@ -77,7 +80,7 @@ async function fetchOpenWeather(lat, lon) {
  * WAQI AQI
  ***********************/
 async function fetchWAQI(lat, lon) {
-  const response = await axios.get(
+  const res = await axios.get(
     `https://api.waqi.info/feed/geo:${lat};${lon}/`,
     {
       params: {
@@ -86,26 +89,26 @@ async function fetchWAQI(lat, lon) {
     }
   );
 
-  if (response.data.status !== "ok") return null;
+  if (res.data.status !== "ok") return null;
 
-  const data = response.data.data;
+  const d = res.data.data;
 
   return {
-    aqi: data.aqi,
-    pm25: data.iaqi?.pm25?.v ?? null,
-    pm10: data.iaqi?.pm10?.v ?? null,
+    aqi: d.aqi,
+    pm25: d.iaqi?.pm25?.v ?? null,
+    pm10: d.iaqi?.pm10?.v ?? null,
     source: "WAQI"
   };
 }
 
 /***********************
- * SMART AQI SELECTION
+ * SMART AQI PICK
  ***********************/
 async function getBestAQI(lat, lon) {
   const ow = await fetchOpenWeather(lat, lon);
   const waqi = await fetchWAQI(lat, lon);
 
-  if (waqi && waqi.aqi && waqi.aqi > 0) {
+  if (waqi && waqi.aqi > 0) {
     return {
       ...waqi,
       category: category(waqi.aqi),
@@ -129,14 +132,13 @@ app.get("/aqi", async (req, res) => {
   const { lat, lon } = req.query;
 
   if (!lat || !lon) {
-    return res.status(400).json({ error: "Latitude and longitude required" });
+    return res.status(400).json({ error: "lat and lon required" });
   }
 
   try {
     const data = await getBestAQI(lat, lon);
     res.json(data);
-  } catch (error) {
-    console.error(error.message);
+  } catch (err) {
     res.status(500).json({ error: "Failed to fetch AQI" });
   }
 });
@@ -162,7 +164,7 @@ app.post("/chat", async (req, res) => {
   if (step === "choose") {
     if (!lat || !lon) {
       return res.json({
-        reply: "Please allow location access to continue.",
+        reply: "Please allow location access.",
         nextStep: "choose"
       });
     }
@@ -172,11 +174,10 @@ app.post("/chat", async (req, res) => {
     if (msg === "1" || msg.includes("air")) {
       return res.json({
         reply:
-          `AQI near you: ${data.aqi} (${data.category})\n` +
+          `AQI: ${data.aqi} (${data.category})\n` +
           `PM2.5: ${data.pm25}\n` +
           `PM10: ${data.pm10}\n` +
-          `Source: ${data.source}\n` +
-          `Confidence: ${data.confidence}`,
+          `Source: ${data.source}`,
         nextStep: "choose"
       });
     }
@@ -189,29 +190,23 @@ app.post("/chat", async (req, res) => {
     }
 
     if (msg === "3" || msg.includes("best")) {
-      const timeAdvice =
+      const t =
         data.aqi <= 100
-          ? "You can go out anytime today."
+          ? "You can go out anytime."
           : data.aqi <= 200
-          ? "Early morning or late evening is safer."
+          ? "Go out early morning or evening."
           : "Avoid going out today.";
 
-      return res.json({
-        reply: timeAdvice,
-        nextStep: "choose"
-      });
+      return res.json({ reply: t, nextStep: "choose" });
     }
   }
 
-  res.json({
-    reply: "Please choose 1, 2, or 3.",
-    nextStep: "choose"
-  });
+  res.json({ reply: "Choose 1, 2 or 3.", nextStep: "choose" });
 });
 
 /***********************
  * START SERVER (RENDER SAFE)
  ***********************/
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Server running on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Server running on ${HOST}:${PORT}`);
 });
