@@ -212,6 +212,11 @@ app.post("/chat", async (req, res) => {
 /***********************
  * START SERVER
  ***********************/
-app.listen(PORT, () => {
+/***********************
+ * START SERVER
+ ***********************/
+// Use 0.0.0.0 to ensure the server is accessible externally on Render
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
