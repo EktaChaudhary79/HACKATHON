@@ -126,7 +126,7 @@ app.post("/chat", async (req, res) => {
 
 // ================= START =================
 let port = std::env::var("PORT")
-    .unwrap_or_else(|_| "8080".to_string());
+    .unwrap_or_else(|_| "5001".to_string());
 
 HttpServer::new(|| {
     App::new()
@@ -134,5 +134,6 @@ HttpServer::new(|| {
 .bind(("0.0.0.0", port.parse::<u16>().unwrap()))?
 .run()
 .await
+
 
 
