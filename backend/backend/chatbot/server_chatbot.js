@@ -7,6 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Render injects PORT automatically
 const PORT = process.env.PORT || 5001;
 
 // ================= API KEYS =================
@@ -34,11 +35,17 @@ function owAqiToReal(aqi) {
   return { 1: 25, 2: 75, 3: 150, 4: 250, 5: 350 }[aqi];
 }
 
-// ================= AQI =================
+// ================= AQI FETCH =================
 async function fetchOpenWeather(lat, lon) {
   const res = await axios.get(
     "https://api.openweathermap.org/data/2.5/air_pollution",
-    { params: { lat, lon, appid: OPENWEATHER_API_KEY } }
+    {
+      params: {
+        lat,
+        lon,
+        appid: OPENWEATHER_API_KEY
+      }
+    }
   );
 
   const d = res.data.list[0];
@@ -53,7 +60,11 @@ async function fetchOpenWeather(lat, lon) {
 async function fetchWAQI(lat, lon) {
   const res = await axios.get(
     `https://api.waqi.info/feed/geo:${lat};${lon}/`,
-    { params: { token: WAQI_API_KEY } }
+    {
+      params: {
+        token: WAQI_API_KEY
+      }
+    }
   );
 
   if (res.data.status !== "ok") return null;
@@ -77,7 +88,9 @@ async function getBestAQI(lat, lon) {
         advice: advice(waqi.aqi)
       };
     }
-  } catch {}
+  } catch (err) {
+    console.log("WAQI failed, fallback to OpenWeather");
+  }
 
   const ow = await fetchOpenWeather(lat, lon);
   return {
@@ -89,51 +102,64 @@ async function getBestAQI(lat, lon) {
 
 // ================= ROUTES =================
 app.get("/", (req, res) => {
-  res.send("Chatbot backend running");
+  res.send("AQI Chatbot Backend Running");
 });
 
 app.get("/aqi", async (req, res) => {
   const { lat, lon } = req.query;
+
   if (!lat || !lon) {
-    return res.status(400).json({ error: "Missing lat/lon" });
+    return res.status(400).json({ error: "Missing lat or lon" });
   }
+
   try {
     const data = await getBestAQI(lat, lon);
     res.json(data);
-  } catch {
-    res.status(500).json({ error: "AQI fetch failed" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch AQI" });
   }
 });
 
 app.post("/chat", async (req, res) => {
   const { message, lat, lon } = req.body;
-  const msg = (message || "").toLowerCase();
 
+  if (!lat || !lon) {
+    return res.json({
+      reply: "Location is required to check air quality."
+    });
+  }
+
+  const msg = (message || "").toLowerCase();
   const data = await getBestAQI(lat, lon);
 
   if (msg.includes("air")) {
-    return res.json({ reply: `AQI is ${data.aqi} (${data.category})` });
+    return res.json({
+      reply: `Current AQI is ${data.aqi} (${data.category}) from ${data.source}.`
+    });
   }
+
   if (msg.includes("health")) {
-    return res.json({ reply: data.advice });
+    return res.json({
+      reply: data.advice
+    });
+  }
+
+  if (msg.includes("best time")) {
+    return res.json({
+      reply:
+        data.aqi <= 100
+          ? "Morning hours are relatively safer."
+          : "Avoid going out unless necessary."
+    });
   }
 
   res.json({
     reply:
-      "Choose:\n1. Air Quality\n2. Health advice\n3. Best time to go out"
+      "Ask me about:\n• Air quality\n• Health advice\n• Best time to go out"
   });
 });
 
-// ================= START =================
-let port = std::env::var("PORT")
-    .unwrap_or_else(|_| "5001".to_string());
-
-HttpServer::new(|| {
-    App::new()
-})
-.bind(("0.0.0.0", port.parse::<u16>().unwrap()))?
-.run()
-.await
-
-
-
+// ================= START SERVER =================
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
