@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import "./HealthProfileScreen.css";
 
 /* ================= Disease-specific Guidelines ================= */
@@ -42,15 +43,69 @@ const diseaseGuidelines = {
   }
 };
 
+const HEALTH_API_URL = process.env.REACT_APP_HEALTH_API_URL;
+
 const HealthProfileScreen = () => {
   const [age, setAge] = useState("");
   const [condition, setCondition] = useState("");
   const [sensitivity, setSensitivity] = useState("medium");
 
-  const getRiskLevel = () => {
-    if (sensitivity === "high") return "High Risk";
-    if (sensitivity === "medium") return "Moderate Risk";
-    return "Low Risk";
+  const [lat, setLat] = useState(null);
+  const [lon, setLon] = useState(null);
+
+  const [riskLevel, setRiskLevel] = useState("");
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  /* ================= GET USER LOCATION ================= */
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLat(position.coords.latitude);
+        setLon(position.coords.longitude);
+      },
+      () => {
+        alert("Unable to fetch your location");
+      }
+    );
+  }, []);
+
+  /* ================= BACKEND HEALTH ANALYSIS ================= */
+  const analyzeHealth = async () => {
+    if (!age || !condition || !lat || !lon) {
+      alert("Please complete all details and allow location access");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post(
+        `${HEALTH_API_URL}/health/analyze`,
+        {
+          lat,
+          lon,
+          age,
+          condition,
+          sensitivity
+        }
+      );
+
+      // ✅ Backend decides everything
+      setRiskLevel(response.data.riskLevel);
+      setAlerts(response.data.alerts);
+
+    } catch (error) {
+      console.error(error);
+      alert("Health analysis service unavailable");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,7 +120,6 @@ const HealthProfileScreen = () => {
           <label>Age</label>
           <input
             type="number"
-            placeholder="Enter your age"
             value={age}
             onChange={(e) => setAge(e.target.value)}
           />
@@ -88,44 +142,49 @@ const HealthProfileScreen = () => {
         <div className="form-group">
           <label>Sensitivity Level</label>
           <div className="sensitivity-buttons">
-            <button
-              className={sensitivity === "low" ? "active" : ""}
-              onClick={() => setSensitivity("low")}
-            >
-              Low
-            </button>
-            <button
-              className={sensitivity === "medium" ? "active" : ""}
-              onClick={() => setSensitivity("medium")}
-            >
-              Medium
-            </button>
-            <button
-              className={sensitivity === "high" ? "active" : ""}
-              onClick={() => setSensitivity("high")}
-            >
-              High
-            </button>
+            {["low", "medium", "high"].map((level) => (
+              <button
+                key={level}
+                className={sensitivity === level ? "active" : ""}
+                onClick={() => setSensitivity(level)}
+              >
+                {level.charAt(0).toUpperCase() + level.slice(1)}
+              </button>
+            ))}
           </div>
         </div>
+
+        <button
+          className="analyze-btn"
+          onClick={analyzeHealth}
+          disabled={loading}
+        >
+          {loading ? "Analyzing..." : "Analyze Health"}
+        </button>
       </div>
 
       {/* ================= Alerts Section ================= */}
-      <div className="alerts-card">
-        <h2>Personalized Alerts</h2>
+      {riskLevel && (
+        <div className="alerts-card">
+          <h2>Personalized Alerts</h2>
 
-        <div className={`risk-indicator ${sensitivity}`}>
-          {getRiskLevel()}
+          <div
+            className={`risk-indicator ${riskLevel
+              .replace(" ", "")
+              .toLowerCase()}`}
+          >
+            {riskLevel}
+          </div>
+
+          <ul className="alerts-list">
+            {alerts.map((alert, index) => (
+              <li key={index}>⚠️ {alert}</li>
+            ))}
+          </ul>
         </div>
+      )}
 
-        <ul className="alerts-list">
-          <li>⚠️ Avoid outdoor travel during peak AQI hours</li>
-          <li>😷 Wear a mask if AQI exceeds safe limits</li>
-          <li>🌿 Prefer green routes and public transport</li>
-        </ul>
-      </div>
-
-      {/* ================= Do's & Don'ts Section ================= */}
+      {/* ================= Do's & Don'ts ================= */}
       {condition && diseaseGuidelines[condition] && (
         <div className="guidelines-card">
           <h2>Do’s & Don’ts for You</h2>

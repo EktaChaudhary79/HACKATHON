@@ -1,0 +1,54 @@
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.profile-modal {
+  background: #ffffff;
+  width: 420px;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.profile-modal h2 {
+  margin-bottom: 16px;
+  color: #03045e;
+}
+
+.profile-modal input,
+.profile-modal select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.profile-modal button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  background: #0077b6;
+  color: #fff;
+  cursor: pointer;
+}
+
+.close-btn {
+  margin-top: 10px;
+  background: #ccc;
+  color: #000;
+}
+
+.auth-toggle {
+  margin-top: 12px;
+  text-align: center;
+  color: #0077b6;
+  cursor: pointer;
+}

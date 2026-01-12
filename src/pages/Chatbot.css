@@ -104,3 +104,23 @@
   color: #fff;
   cursor: pointer;
 }
+.chat-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 12px 45px;
+}
+
+.chat-options button {
+  background: #e8f5e9;
+  border: 1px solid #4caf50;
+  color: #2e7d32;
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.chat-options button:hover {
+  background: #c8e6c9;
+}

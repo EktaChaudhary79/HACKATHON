@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
   LineChart,
@@ -10,15 +10,25 @@ import {
   CartesianGrid,
   ResponsiveContainer
 } from "recharts";
+import { useLocation } from "../context/LocationContext";
 import "./AQIHistoryScreen.css";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+
 const AQIHistoryScreen = () => {
+  const { location: globalLocation } = useLocation(); // from Navbar/Home
+
   const [location, setLocation] = useState("");
   const [aqiTrendData, setAqiTrendData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL;
+  // 🔹 ONLY prefill input ONCE from Navbar
+  useEffect(() => {
+    if (globalLocation && location === "") {
+      setLocation(globalLocation);
+    }
+  }, [globalLocation, location]);
 
   const fetchAQIHistory = async () => {
     if (!location) return;
@@ -49,7 +59,7 @@ const AQIHistoryScreen = () => {
     <div className="aqi-history-screen">
       <h1>AQI History & Trends</h1>
 
-      {/* 🔍 Location Input */}
+      {/* INPUT (UNCHANGED FUNCTIONALITY) */}
       <div className="location-input-wrapper">
         <input
           type="text"

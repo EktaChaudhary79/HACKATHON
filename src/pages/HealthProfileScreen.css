@@ -159,3 +159,34 @@
   font-size: 0.95rem;
   line-height: 1.5;
 }
+.analyze-btn {
+  margin-top: 20px;
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 30px;
+  border: none;
+
+  /* 🌿 Theme gradient */
+  background: linear-gradient(135deg, #00b4d8, #2ec4b6);
+  color: #ffffff;
+
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 18px rgba(0, 180, 216, 0.25);
+}
+
+/* Hover effect */
+.analyze-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 180, 216, 0.35);
+  background: linear-gradient(135deg, #0096c7, #26b0a5);
+}
+
+/* Disabled state */
+.analyze-btn:disabled {
+  background: linear-gradient(135deg, #b0e0e6, #c7ecee);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}

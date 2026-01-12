@@ -92,3 +92,42 @@
   transform: scale(1.05);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
 }
+/* Search button next to input */
+.search-btn {
+  margin-left: 10px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+
+  background: linear-gradient(
+    135deg,
+    var(--turquoise),
+    var(--bright-teal)
+  );
+
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  box-shadow: 0 6px 16px rgba(0, 180, 216, 0.35);
+  transition: all 0.25s ease;
+}
+
+/* Hover effect */
+.search-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0, 180, 216, 0.5);
+}
+
+/* Active (click) effect */
+.search-btn:active {
+  transform: scale(0.97);
+}
+
+/* Optional: disabled state */
+.search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
