@@ -1,0 +1,13 @@
+{
+  "name": "health-backend",
+  "type": "commonjs",
+  "main": "server_old.js",
+  "scripts": {
+    "start": "node server_old.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.0.0",
+    "node-fetch": "^3.3.2"
+  }
+}
