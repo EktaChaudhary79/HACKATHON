@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import carpoolData from "./carpools"; 
 import { MapContainer, TileLayer, Marker, Polyline, Tooltip } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import carpoolData from "./carpools";
 
 // Fix marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -22,8 +22,7 @@ const MapComponent = () => {
   const [activeRouteIndex, setActiveRouteIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [carpools, setCarpools] = useState([]);
-
+  const [carpools, setCarpools] = useState(carpoolData);
   const [userBookings, setUserBookings] = useState({});
   const [toast, setToast] = useState("");
 
@@ -34,14 +33,6 @@ const MapComponent = () => {
 
   // New state for pickup message feature
   const [recentBooking, setRecentBooking] = useState(null);
-
-  // Rider Details Modal
-  const [riderModalOpen, setRiderModalOpen] = useState(false);
-  const [selectedRider, setSelectedRider] = useState(null);
-
-
-  // 🔹 New state for carbon impact
-  const [carbonImpact, setCarbonImpact] = useState({ solo: 0, saved: 0, perPerson: 0 });
 
   const fetchCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -134,31 +125,26 @@ const MapComponent = () => {
         };
       });
 
-      // 🔹 regenerate carpools using REAL rider data
-const shuffledRiders = [...carpoolData].sort(() => Math.random() - 0.5);
-const newCarpools = [];
-
-formattedRoutes.forEach((route) => {
-  const count = Math.floor(Math.random() * 4) + 2; // 2–5 riders per route
-
-  shuffledRiders
-    .filter((r) => r.route === route.routeId)
-    .slice(0, count)
-    .forEach((rider) => {
-      newCarpools.push({
-        ...rider,                 // ✅ real data
-        route: route.routeId,     // ensure route matches
+      // 🔹 regenerate carpools on every route fetch
+      const newCarpools = [];
+      formattedRoutes.forEach((route) => {
+        const count = Math.floor(Math.random() * 5) + 1; // 1–5 carpools
+        for (let i = 0; i < count; i++) {
+          newCarpools.push({
+            route: route.routeId,
+            name: `${startPlace || "Current Location"} → ${endPlace} | Rider ${i + 1}`,
+            seats: Math.floor(Math.random() * 3) + 1, // 1–3 seats
+          });
+        }
       });
-    });
-});
 
-setCarpools(newCarpools);
+      newCarpools.sort(() => Math.random() - 0.5);
 
+      setCarpools(newCarpools);
       setRoutes(formattedRoutes);
       setActiveRouteIndex(0);
       setUserBookings({}); // reset previous bookings on new routes
       setRecentBooking(null); // remove pickup message when new routes are fetched
-      setCarbonImpact({ solo: 0, saved: 0, perPerson: 0 }); // reset carbon on new route fetch
     } catch (err) {
       setError(err.message);
     } finally {
@@ -201,30 +187,9 @@ setCarpools(newCarpools);
     setRecentBooking(null);
   }, [endPlace, activeRouteIndex]);
 
-  // 🔹 Carbon impact calculation
-  useEffect(() => {
-    if (!routes.length) return;
-    const activeRoute = routes[activeRouteIndex];
-    const distanceKm = parseFloat(activeRoute.distance);
-    const emissionFactor = 0.12; // kg CO₂ per km per person
-
-    const soloCO2 = distanceKm * emissionFactor;
-
-    // Count total passengers in booked carpools for this route
-    let totalSeatsBooked = 0;
-    Object.values(userBookings).forEach((b) => {
-      if (b.route === activeRoute.routeId) totalSeatsBooked += b.seats;
-    });
-
-    const passengers = totalSeatsBooked > 0 ? totalSeatsBooked + 1 : 1;
-    const perPersonCO2 = soloCO2 / passengers;
-    const savedCO2 = soloCO2 - perPersonCO2;
-
-    setCarbonImpact({ solo: soloCO2.toFixed(2), saved: savedCO2.toFixed(2), perPerson: perPersonCO2.toFixed(2) });
-  }, [activeRouteIndex, routes, userBookings]);
-
   // Open modal instead of prompt
   const handleBooking = (idx) => {
+    // ✅ Restrict multiple bookings
     if (Object.keys(userBookings).length > 0) {
       setToast("You have already booked a ride!");
       setTimeout(() => setToast(""), 3000);
@@ -241,8 +206,6 @@ setCarpools(newCarpools);
     const idx = modalCarpoolIndex;
     const routeId = routes[activeRouteIndex].routeId;
     const selected = carpools.filter((c) => c.route === routeId)[idx];
-
-
 
     if (!selected || selected.seats === 0) {
       setToast("No seats available");
@@ -265,12 +228,10 @@ setCarpools(newCarpools);
     });
 
     setToast(`Booking confirmed: ${seats} seat(s) in ${selected.name}`);
-    setRecentBooking({ name: selected.name, route: routeId });
-
-
+    setRecentBooking({ name: selected.name, route: routeId }); // ✅ Show pickup message after booking
     setTimeout(() => setToast(""), 4000);
 
-    setModalOpen(false);
+    setModalOpen(false); // auto-close modal after booking
   };
 
   const handleCancelBooking = (name) => {
@@ -290,50 +251,9 @@ setCarpools(newCarpools);
       return copy;
     });
 
-    // 🔹 ADD THIS LINE
-    if (recentBooking?.name === name) setRecentBooking(null);
-
     setToast(`Cancelled booking for ${name}`);
     setTimeout(() => setToast(""), 3000);
   };
-
-
-  const openRiderDetails = () => {
-  if (!recentBooking) return;
-
-  const activeRoute = routes[activeRouteIndex];
-
-  const carpool = carpools.find(
-  (c) => c.name === recentBooking.name
-);
-
-
-  if (!carpool) return;
-
-  setSelectedRider({
-  // ✅ explicitly map rider data
-  riderName: carpool.name,
-  vehicle: carpool.vehicle,
-  rating: carpool.rating,
-  contact: carpool.phone,
-   
-
-  // ✅ route info MUST come from routes[]
-  route: routes[activeRouteIndex]?.name,
-
-  // ✅ booking + UI info
-  seats: userBookings[carpool.name]?.seats || 0,
-  eta: "10 minutes",
-
-  // ✅ map-calculated values (unchanged)
-  distance: activeRoute?.distance,
-  duration: activeRoute?.duration,
-});
-
-
-  setRiderModalOpen(true);
-};
-
 
   const getCarpoolsForRoute = (routeIndex) => {
     const routeId = routes[routeIndex]?.routeId ?? 0;
@@ -398,7 +318,6 @@ setCarpools(newCarpools);
 
           {routes.length > 0 && (
             <>
-              {/* Route selection card */}
               <div className="route-card centered-card">
                 <strong>Choose a Route</strong>
                 <ul className="route-list">
@@ -417,15 +336,6 @@ setCarpools(newCarpools);
                 </ul>
               </div>
 
-              {/* 🔹 Carbon Impact Card */}
-              <div className="route-card centered-card">
-                <strong>Carbon Impact 🌱</strong>
-                <p>Solo CO₂: {carbonImpact.solo} kg</p>
-                <p>Per Person CO₂: {carbonImpact.perPerson} kg</p>
-                <p>Carbon Saved: {carbonImpact.saved} kg</p>
-              </div>
-
-              {/* Carpool suggestions */}
               <div className="carpool-card centered-card">
                 <strong>Suggested Carpools</strong>
                 <ul>
@@ -455,6 +365,7 @@ setCarpools(newCarpools);
                   ))}
                 </ul>
 
+                {/* ✅ Pickup message shown only after booking */}
                 {recentBooking && (
                   <div
                     style={{
@@ -479,8 +390,7 @@ setCarpools(newCarpools);
                         cursor: "pointer",
                         fontSize: "0.9rem",
                       }}
-                      onClick={openRiderDetails}
-
+                      onClick={() => alert(`Rider Details:\n${recentBooking.name}`)}
                     >
                       View Rider Details
                     </button>
@@ -514,34 +424,6 @@ setCarpools(newCarpools);
                   </div>
                 </div>
               )}
-
-              {/* Rider Details Modal */}
-{riderModalOpen && selectedRider && (
-  <div className="modal-overlay">
-    <div className="modal-content">
-      <h3>Rider Details</h3>
-
-      <p><strong>Name:</strong> {selectedRider.riderName}</p>
-      <p><strong>Route:</strong> {selectedRider.route}</p>
-      <p><strong>Seats Booked:</strong> {selectedRider.seats}</p>
-      <p><strong>Pickup ETA:</strong> {selectedRider.eta}</p>
-      <p><strong>Contact:</strong> {selectedRider.contact}</p>
-      <p><strong>Distance:</strong> {selectedRider.distance} km</p>
-      <p><strong>Duration:</strong> {selectedRider.duration} min</p>
-      <p><strong>Vehicle:</strong> {selectedRider.vehicle}</p>
-      <p><strong>Rating:</strong> {selectedRider.rating} ⭐</p>
-
-      
-
-      <div className="modal-buttons">
-        <button onClick={() => setRiderModalOpen(false)}>
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
             </>
           )}
         </div>
@@ -551,8 +433,6 @@ setCarpools(newCarpools);
 };
 
 export default MapComponent;
-
-
 
 
 

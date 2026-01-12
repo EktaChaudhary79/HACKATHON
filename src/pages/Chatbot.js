@@ -1,57 +1,119 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./Chatbot.css";
+
+const API_URL = "https://chatbot-x3x4.onrender.com/chat";
 
 const Chatbot = () => {
   const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      sender: "bot",
-      text: "Hi 👋 I’m AeroWay. Ask me about AQI, routes, or health tips!"
-    }
-  ]);
+  const [step, setStep] = useState("start");
+  const [loading, setLoading] = useState(false);
+  const [location, setLocation] = useState({ lat: null, lon: null });
 
+  /* =====================
+     GET USER LOCATION
+  ===================== */
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude
+        });
+      },
+      () => {
+        console.warn("Location permission denied");
+      }
+    );
+  }, []);
+
+  /* =====================
+     START CHAT ON OPEN
+  ===================== */
+  useEffect(() => {
+    if (open && messages.length === 0) {
+      sendMessage("");
+    }
+  }, [open]);
+
+  /* =====================
+     SEND MESSAGE TO BACKEND
+  ===================== */
+  const sendMessage = async (msg) => {
+    setLoading(true);
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: msg,
+          step: step,
+          lat: location.lat,
+          lon: location.lon
+        })
+      });
+
+      const data = await res.json();
+
+      setMessages((prev) => [
+        ...prev,
+        { sender: "bot", text: data.reply }
+      ]);
+
+      setStep(data.nextStep || step);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: "⚠️ Server error. Please try again."
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* =====================
+     HANDLE USER INPUT
+  ===================== */
   const handleSend = () => {
     if (!input.trim()) return;
 
-    const userMessage = { sender: "user", text: input };
-    setMessages([...messages, userMessage]);
+    const msg = input.trim();
 
-    // Mock AI reply (replace with real AI later)
-    setTimeout(() => {
-      const botReply = {
-        sender: "bot",
-        text: getBotReply(input)
-      };
-      setMessages((prev) => [...prev, botReply]);
-    }, 600);
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: msg }
+    ]);
 
     setInput("");
+    sendMessage(msg);
   };
 
-  const getBotReply = (text) => {
-    const msg = text.toLowerCase();
-
-    if (msg.includes("aqi")) {
-      return "📊 If AQI is above 150, avoid outdoor travel and wear a mask.";
-    }
-    if (msg.includes("route")) {
-      return "🛣️ I recommend green routes with lower traffic for safer travel.";
-    }
-    if (msg.includes("asthma") || msg.includes("health")) {
-      return "🧑‍⚕️ Asthma patients should avoid peak hours and use masks on poor AQI days.";
-    }
-    return "🤖 I can help with AQI safety, commute routes, and health advice!";
+  /* =====================
+     QUICK OPTION BUTTONS
+  ===================== */
+  const quickOption = (value, label) => {
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text: label }
+    ]);
+    sendMessage(value);
   };
 
   return (
     <>
       {/* Floating Button */}
-      <div className="chatbot-button" onClick={() => setOpen(!open)}>
+      <div className="chatbot-button" onClick={() => setOpen(true)}>
         🤖
       </div>
 
-      {/* Chat Panel */}
+      {/* Chat Window */}
       {open && (
         <div className="chatbot-panel">
           <div className="chatbot-header">
@@ -60,20 +122,37 @@ const Chatbot = () => {
           </div>
 
           <div className="chatbot-messages">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`chat-message ${msg.sender}`}
-              >
+            {messages.map((msg, i) => (
+              <div key={i} className={`chat-message ${msg.sender}`}>
                 {msg.text}
               </div>
             ))}
+
+            {/* Quick options when choosing */}
+            {step === "choose" && !loading && (
+              <div className="chat-options">
+                <button onClick={() => quickOption("1", "Air Quality")}>
+                  🌫 Air Quality
+                </button>
+                <button onClick={() => quickOption("2", "Health Advice")}>
+                  🩺 Health Advice
+                </button>
+                <button onClick={() => quickOption("3", "Best Time to Go Out")}>
+                  ⏰ Best Time
+                </button>
+              </div>
+            )}
+
+            {loading && (
+              <div className="chat-message bot">⏳ Thinking...</div>
+            )}
           </div>
 
+          {/* Input box */}
           <div className="chatbot-input">
             <input
               type="text"
-              placeholder="Ask me something..."
+              placeholder="Type 1, 2 or 3..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}

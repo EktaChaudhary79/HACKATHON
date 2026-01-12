@@ -4,8 +4,8 @@ import Home from "./pages/Home";
 import AQIDashboard from "./pages/AQIDashboard";
 import AQIHistoryScreen from "./pages/AQIHistoryScreen";
 import HealthProfileScreen from "./pages/HealthProfileScreen";
-import SafeRoutes from "./pages/SafeRoutes";
 import SmartCommuteScreen from "./pages/SmartCommuteScreen";
+import ProfileSettings from "./pages/ProfileSettings"; // ✅ ADD THIS
 
 import Chatbot from "./pages/Chatbot";
 
@@ -18,8 +18,13 @@ function App() {
         <Route path="/aqi-live" element={<AQIDashboard />} />
         <Route path="/aqi-history" element={<AQIHistoryScreen />} />
         <Route path="/health-profile" element={<HealthProfileScreen />} />
-        <Route path="/safe-routes" element={<SafeRoutes />} />
         <Route path="/smart-commute" element={<SmartCommuteScreen />} />
+
+        {/* ✅ PROFILE SETTINGS ROUTE */}
+        <Route
+          path="/profile-settings"
+          element={<ProfileSettings />}
+        />
       </Routes>
 
       {/* AI Chatbot Overlay – always visible */}

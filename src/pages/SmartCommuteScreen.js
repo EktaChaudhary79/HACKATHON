@@ -1,42 +1,27 @@
 import React, { useState } from "react";
-import { FaCar, FaUsers, FaBus, FaStar } from "react-icons/fa";
+import { FaCar, FaUsers, FaBus } from "react-icons/fa";
+import MapComponent from "../components/MapComponent";
 import "./SmartCommuteScreen.css";
 
 const SmartCommuteScreen = () => {
   const [source, setSource] = useState("");
   const [destination, setDestination] = useState("");
   const [mode, setMode] = useState("solo");
+  const [showMap, setShowMap] = useState(false);
 
-  // Placeholder route options
-  const routeOptions = [
-    {
-      type: "Solo Route",
-      icon: <FaCar />,
-      pollution: 45,
-      co2: 1.2,
-      best: false,
-    },
-    {
-      type: "Carpool + Safe Route",
-      icon: <FaUsers />,
-      pollution: 30,
-      co2: 0.7,
-      best: true,
-    },
-    {
-      type: "Public Transport",
-      icon: <FaBus />,
-      pollution: 35,
-      co2: 0.9,
-      best: false,
-    },
-  ];
+  const handleFindRoute = () => {
+    if (!source || !destination) {
+      alert("Please enter both source and destination");
+      return;
+    }
+    setShowMap(true);
+  };
 
   return (
     <div className="smart-commute-screen">
       <h1>Smart Commute Planner</h1>
 
-      {/* Source & Destination Inputs */}
+      {/* Inputs */}
       <div className="inputs-section">
         <input
           type="text"
@@ -44,53 +29,57 @@ const SmartCommuteScreen = () => {
           value={source}
           onChange={(e) => setSource(e.target.value)}
         />
+
         <input
           type="text"
           placeholder="Enter Destination"
           value={destination}
           onChange={(e) => setDestination(e.target.value)}
         />
+
+        <button
+          className="find-route-btn"
+          onClick={handleFindRoute}
+          disabled={!source || !destination}
+        >
+          Find Best Route
+        </button>
       </div>
 
-      {/* Commute Mode Selection */}
+      {/* Mode Selection */}
       <div className="mode-selection">
         <button
           className={mode === "solo" ? "active" : ""}
           onClick={() => setMode("solo")}
         >
-          Solo
+          <FaCar /> Solo
         </button>
+
         <button
           className={mode === "carpool" ? "active" : ""}
           onClick={() => setMode("carpool")}
         >
-          Carpool
+          <FaUsers /> Carpool
         </button>
+
         <button
           className={mode === "public" ? "active" : ""}
           onClick={() => setMode("public")}
         >
-          Public Transport
+          <FaBus /> Public Transport
         </button>
       </div>
 
-      {/* Map Placeholder */}
-      <div className="map-placeholder">
-        <p>🗺️ Map will be displayed here</p>
-      </div>
-
-      {/* Route Option Cards */}
-      <div className="route-cards">
-        {routeOptions.map((option, index) => (
-          <div key={index} className={`route-card ${option.best ? "best" : ""}`}>
-            {option.best && <div className="best-badge"><FaStar /> Best Option Today</div>}
-            <div className="route-icon">{option.icon}</div>
-            <h3>{option.type}</h3>
-            <p>Pollution Score: {option.pollution}</p>
-            <p>CO₂ Savings: {option.co2} kg</p>
-          </div>
-        ))}
-      </div>
+      {/* Map */}
+      {showMap && (
+        <div style={{ marginTop: "30px" }}>
+          <MapComponent
+            source={source}
+            destination={destination}
+            mode={mode}
+          />
+        </div>
+      )}
     </div>
   );
 };

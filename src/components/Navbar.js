@@ -1,32 +1,76 @@
 import "./Navbar.css";
-
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useLocation } from "../context/LocationContext";
+import { useAuth } from "../context/AuthContext";
+import AuthModal from "./AuthModal";
 
 function Navbar() {
+  const { setLocation } = useLocation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [inputValue, setInputValue] = useState("");
+  const [showAuth, setShowAuth] = useState(false);
+
+  const handleSearch = () => {
+    if (!inputValue.trim()) return;
+    setLocation(inputValue.trim());
+  };
+
+  // ✅ CORRECT PROFILE HANDLER
+  const handleProfileClick = () => {
+    if (user) {
+      navigate("/profile-settings"); // ✅ Profile settings screen
+    } else {
+      setShowAuth(true); // ✅ Auth modal
+    }
+  };
+
   return (
-    <nav className="navbar">
-      {/* LEFT: Logo + App Name */}
-      <div className="nav-left">
-        <span className="logo">🌱</span>
-        <span className="brand">AeroWay</span>
-      </div>
+    <>
+      <nav className="navbar">
+        <div className="nav-left">
+          <span className="logo">🌱</span>
+          <span className="brand">AeroWay</span>
+        </div>
 
-      {/* CENTER: Search Bar */}
-      <div className="nav-center">
-        <input
-          type="text"
-          placeholder="Search city or location"
-          className="search-input"
-        />
-      </div>
+        <div className="nav-center">
+          <input
+            type="text"
+            placeholder="Search city or location"
+            className="search-input"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <button className="search-btn" onClick={handleSearch}>
+            Enter
+          </button>
+        </div>
 
-      {/* RIGHT: Menu Items */}
-      <div className="nav-right">
-        <span className="nav-item">AQI</span>
-        <span className="nav-item">Commute</span>
-        <span className="nav-item">Resources</span>
-        <button className="profile-btn">👤 My Profile</button>
-      </div>
-    </nav>
+        <div className="nav-right">
+          <span className="nav-item" onClick={() => navigate("/aqi-live")}>
+            AQI
+          </span>
+
+          <span
+            className="nav-item"
+            onClick={() => navigate("/smart-commute")}
+          >
+            Commute
+          </span>
+
+          <span className="nav-item">Resources</span>
+
+          <button className="profile-btn" onClick={handleProfileClick}>
+            👤 {user ? "My Profile" : "Sign In"}
+          </button>
+        </div>
+      </nav>
+
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+    </>
   );
 }
 

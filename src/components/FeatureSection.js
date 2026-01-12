@@ -5,7 +5,6 @@ import "./FeatureSection.css";
 import aqiLive from "../assets/images/aqi-dashboard.webp";
 import aqiHistory from "../assets/images/aqi-history.png";
 import health from "../assets/images/health-alerts.jpg";
-import routes from "../assets/images/safe-routes.webp";
 import commute from "../assets/images/smart-commute.webp";
 import chatbot from "../assets/images/ai-chatbot.png";
 
@@ -18,10 +17,14 @@ const FeatureBlock = ({
   path,
   hideButton,
 }) => {
-  const ref = useRef();
+  const ref = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const element = ref.current; // ✅ store ref value once
+
+    if (!element) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -31,9 +34,10 @@ const FeatureBlock = ({
       { threshold: 0.3 }
     );
 
-    if (ref.current) observer.observe(ref.current);
+    observer.observe(element);
+
     return () => {
-      if (ref.current) observer.unobserve(ref.current);
+      observer.unobserve(element); // ✅ safe cleanup
     };
   }, []);
 
@@ -69,7 +73,6 @@ const FeatureBlock = ({
 const FeatureSection = () => {
   return (
     <section className="feature-wrapper">
-      
       {/* FEATURES SECTION HEADING */}
       <div className="features-heading">
         <h1>Features Our Website Offers</h1>
@@ -80,7 +83,7 @@ const FeatureSection = () => {
         <div className="features-heading-line"></div>
       </div>
 
-      {/* FEATURE CARDS START */}
+      {/* FEATURE CARDS */}
       <FeatureBlock
         title="Real-time Air Quality Monitoring"
         desc="Track live AQI values like aqi.in with pollutant-level insights."
@@ -111,19 +114,7 @@ const FeatureSection = () => {
       />
 
       <FeatureBlock
-        reverse
-        title="AI-Powered Safe Routes"
-        desc="Routes optimized for lowest pollution exposure."
-        points={[
-          "Exposure score",
-          "Health-first routing",
-          "AI recommendations",
-        ]}
-        image={routes}
-        path="/safe-routes"
-      />
-
-      <FeatureBlock
+      reverse
         title="Smart Commute & Carpool"
         desc="Reduce emissions using carpool & public transport."
         points={[
@@ -137,7 +128,6 @@ const FeatureSection = () => {
 
       {/* AI Assistant – no Know More button */}
       <FeatureBlock
-        reverse
         title="AI Assistant"
         desc="Ask anything about AQI, health, or commute safety."
         points={[
