@@ -1,4 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback
+} from "react";
 import "./Chatbot.css";
 
 const API_URL = "https://chatbot-x3x4.onrender.com/chat";
@@ -11,6 +16,9 @@ const Chatbot = () => {
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState({ lat: null, lon: null });
 
+  // 🔒 Prevent duplicate greeting
+  const hasGreeted = useRef(false);
+
   /* =====================
      GET USER LOCATION
   ===================== */
@@ -21,7 +29,7 @@ const Chatbot = () => {
       (pos) => {
         setLocation({
           lat: pos.coords.latitude,
-          lon: pos.coords.longitude
+          lon: pos.coords.longitude,
         });
       },
       () => {
@@ -31,52 +39,56 @@ const Chatbot = () => {
   }, []);
 
   /* =====================
-     START CHAT ON OPEN
+     SEND MESSAGE (STABLE)
   ===================== */
-  useEffect(() => {
-    if (open && messages.length === 0) {
-      sendMessage("");
-    }
-  }, [open]);
+  const sendMessage = useCallback(
+    async (msg) => {
+      setLoading(true);
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: msg,
+            step: step,
+            lat: location.lat,
+            lon: location.lon,
+          }),
+        });
+
+        const data = await res.json();
+
+        setMessages((prev) => [
+          ...prev,
+          { sender: "bot", text: data.reply },
+        ]);
+
+        setStep(data.nextStep || step);
+      } catch (err) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: "⚠️ Server error. Please try again.",
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [step, location.lat, location.lon]
+  );
 
   /* =====================
-     SEND MESSAGE TO BACKEND
+     GREETING (ONLY ONCE)
   ===================== */
-  const sendMessage = async (msg) => {
-    setLoading(true);
-
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: msg,
-          step: step,
-          lat: location.lat,
-          lon: location.lon
-        })
-      });
-
-      const data = await res.json();
-
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: data.reply }
-      ]);
-
-      setStep(data.nextStep || step);
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: "⚠️ Server error. Please try again."
-        }
-      ]);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (open && !hasGreeted.current) {
+      hasGreeted.current = true;
+      sendMessage("");
     }
-  };
+  }, [open, sendMessage]);
 
   /* =====================
      HANDLE USER INPUT
@@ -88,7 +100,7 @@ const Chatbot = () => {
 
     setMessages((prev) => [
       ...prev,
-      { sender: "user", text: msg }
+      { sender: "user", text: msg },
     ]);
 
     setInput("");
@@ -101,7 +113,7 @@ const Chatbot = () => {
   const quickOption = (value, label) => {
     setMessages((prev) => [
       ...prev,
-      { sender: "user", text: label }
+      { sender: "user", text: label },
     ]);
     sendMessage(value);
   };
@@ -109,7 +121,10 @@ const Chatbot = () => {
   return (
     <>
       {/* Floating Button */}
-      <div className="chatbot-button" onClick={() => setOpen(true)}>
+      <div
+        className="chatbot-button"
+        onClick={() => setOpen(true)}
+      >
         🤖
       </div>
 
@@ -123,12 +138,15 @@ const Chatbot = () => {
 
           <div className="chatbot-messages">
             {messages.map((msg, i) => (
-              <div key={i} className={`chat-message ${msg.sender}`}>
+              <div
+                key={i}
+                className={`chat-message ${msg.sender}`}
+              >
                 {msg.text}
               </div>
             ))}
 
-            {/* Quick options when choosing */}
+            {/* Quick Options */}
             {step === "choose" && !loading && (
               <div className="chat-options">
                 <button onClick={() => quickOption("1", "Air Quality")}>
@@ -144,18 +162,22 @@ const Chatbot = () => {
             )}
 
             {loading && (
-              <div className="chat-message bot">⏳ Thinking...</div>
+              <div className="chat-message bot">
+                ⏳ Thinking...
+              </div>
             )}
           </div>
 
-          {/* Input box */}
+          {/* Input */}
           <div className="chatbot-input">
             <input
               type="text"
               placeholder="Type 1, 2 or 3..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onKeyDown={(e) =>
+                e.key === "Enter" && handleSend()
+              }
             />
             <button onClick={handleSend}>Send</button>
           </div>

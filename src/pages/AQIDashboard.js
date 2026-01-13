@@ -3,56 +3,73 @@ import axios from "axios";
 import { useLocation } from "../context/LocationContext";
 import "./AQIDashboard.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_AQI_API_URL;
 
 const AQIDashboard = () => {
-  const { location: globalLocation } = useLocation(); // from Navbar/Home
+  const { location: globalLocation } = useLocation();
 
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [aqiData, setAqiData] = useState(null);
+  const [error, setError] = useState("");
 
-  // 🔹 Prefill input ONCE from Navbar
+  /* =========================
+     Prefill input ONLY
+     (NO auto fetch)
+  ========================= */
   useEffect(() => {
     if (globalLocation && city === "") {
       setCity(globalLocation);
     }
   }, [globalLocation, city]);
 
+  /* =========================
+     Fetch AQI (ON BUTTON CLICK)
+  ========================= */
   const fetchAQI = async () => {
-    if (!city) return;
+    if (!city.trim()) return;
 
     setLoading(true);
+    setError("");
+    setAqiData(null);
+
     try {
       const res = await axios.get(
-        `${API_BASE_URL}/aqi/nearest?q=${encodeURIComponent(city)}`
+        `${API_BASE_URL}/aqi/nearest`,
+        {
+          params: { q: city }
+        }
       );
 
       const data = res.data;
 
       setAqiData({
-        aqi: data.aqi.value,
-        category: data.aqi.category,
+        aqi: data?.aqi?.value ?? "N/A",
+        category: data?.aqi?.category ?? "N/A",
+
         pollutants: [
-          { name: "PM2.5", value: `${data.pollutants.pm25 ?? "N/A"} µg/m³` },
-          { name: "PM10", value: `${data.pollutants.pm10 ?? "N/A"} µg/m³` },
-          { name: "NO₂", value: `${data.pollutants.no2 ?? "N/A"} µg/m³` },
-          { name: "SO₂", value: `${data.pollutants.so2 ?? "N/A"} µg/m³` },
-          { name: "CO", value: `${data.pollutants.co ?? "N/A"} µg/m³` },
-          { name: "O₃", value: `${data.pollutants.o3 ?? "N/A"} µg/m³` },
+          { name: "PM2.5", value: `${data?.pollutants?.pm25 ?? "N/A"} µg/m³` },
+          { name: "PM10", value: `${data?.pollutants?.pm10 ?? "N/A"} µg/m³` },
+          { name: "NO₂", value: `${data?.pollutants?.no2 ?? "N/A"} µg/m³` },
+          { name: "SO₂", value: `${data?.pollutants?.so2 ?? "N/A"} µg/m³` },
+          { name: "CO", value: `${data?.pollutants?.co ?? "N/A"} mg/m³` },
+          { name: "O₃", value: `${data?.pollutants?.o3 ?? "N/A"} µg/m³` },
         ],
+
         weather: {
-          temp: `${data.weather.temperature}°C`,
-          humidity: `${data.weather.humidity}%`,
-          wind: `${data.weather.windSpeed} m/s`,
-          condition: data.weather.condition,
+          temp: `${data?.weather?.temperature ?? "N/A"} °C`,
+          humidity: `${data?.weather?.humidity ?? "N/A"} %`,
+          wind: `${data?.weather?.windSpeed ?? "N/A"} m/s`,
+          condition: data?.weather?.condition ?? "N/A",
         },
-        station: data.station?.name,
-        location: data.resolvedLocation,
+
+        station: data?.station?.name ?? "Unknown",
+        location: data?.resolvedLocation ?? city,
       });
-    } catch (error) {
-      console.error("Failed to fetch AQI", error);
-      alert("Failed to fetch AQI data");
+
+    } catch (err) {
+      console.error("Failed to fetch AQI:", err);
+      setError("Failed to fetch AQI data. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -62,26 +79,33 @@ const AQIDashboard = () => {
     <div className="aqi-dashboard">
       {/* HEADER */}
       <div className="aqi-header">
-        <h1>🌫️ Air Quality Dashboard</h1>
-        <p>Live air quality insights based on your location</p>
+        <h1>Air Quality Dashboard</h1>
+        <p>Get nearest AQI after entering a location</p>
       </div>
 
       {/* INPUT */}
       <div className="aqi-input-wrapper">
         <input
           type="text"
-          placeholder="Enter location (e.g. Sarojini Nagar, Delhi)"
+          placeholder="Enter full location (e.g. Sarojini Nagar, Delhi)"
           value={city}
           onChange={(e) => setCity(e.target.value)}
           disabled={loading}
           className="aqi-input"
         />
-        <button onClick={fetchAQI} disabled={loading} className="aqi-btn">
+        <button
+          onClick={fetchAQI}
+          disabled={loading || !city.trim()}
+          className="aqi-btn"
+        >
           {loading ? "Loading..." : "Get AQI"}
         </button>
       </div>
 
-      {/* AQI SUMMARY */}
+      {/* ERROR */}
+      {error && <p className="error-text">{error}</p>}
+
+      {/* AQI RESULT */}
       {aqiData && !loading && (
         <>
           <div className="aqi-summary-card">
@@ -94,20 +118,18 @@ const AQIDashboard = () => {
             </p>
           </div>
 
-          {/* DOMINANT POLLUTANTS */}
           <div className="section">
             <h2>Dominant Pollutants</h2>
             <div className="pollutant-grid">
-              {aqiData.pollutants.map((pollutant, index) => (
-                <div className="pollutant-card" key={index}>
-                  <h3>{pollutant.name}</h3>
-                  <div className="pollutant-value">{pollutant.value}</div>
+              {aqiData.pollutants.map((p, i) => (
+                <div className="pollutant-card" key={i}>
+                  <h3>{p.name}</h3>
+                  <div className="pollutant-value">{p.value}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* WEATHER CONDITIONS */}
           <div className="section">
             <h2>Weather Conditions</h2>
             <div className="weather-grid">
