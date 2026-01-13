@@ -1,70 +1,78 @@
-# Getting Started with Create React App
+AeroWay – Smart Air Quality & Commute Platform
+AeroWay is a modern, intelligent web platform designed to help users make healthier and safer travel decisions by combining real-time air quality data, personalized health insights, and smart commute planning.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+🚀 Project Overview:
+AeroWay brings multiple essential urban mobility and environmental awareness tools into one unified platform.
+While existing applications handle air quality, routing, or ride-sharing separately, AeroWay integrates them seamlessly to deliver a holistic, user-centric experience.
 
-## Available Scripts
+Why AeroWay?
+Most platforms today provide:
+❌ Only AQI data
+❌ Only navigation
+❌ Only ride-sharing
+AeroWay combines all of them and adds intelligence through health awareness and AI, making it a unique and impactful solution for smart and sustainable cities.
 
-In the project directory, you can run:
+Key Features:
+🌫️ Real-Time Air Quality Monitoring
+Displays live AQI (Air Quality Index) data for selected locations
+Shows major pollutants and air quality categories
+Easy-to-understand visual indicators
 
-### `npm start`
+📊 Historical AQI Trends
+Interactive charts for analyzing air quality over time
+Helps users identify pollution patterns and peak hours
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+❤️ Health Profile Integration
+Users can define health conditions (e.g., asthma, allergies)
+Provides personalized warnings and recommendations based on AQI levels
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+🚗 Smart Commute Suggestions
+Carpooling options to reduce emissions
+Public transport suggestions for eco-friendly travel
 
-### `npm test`
+🤖 AI Chatbot Assistance
+Instant answers to air quality, health, and commute-related queries
+Enhances accessibility and user engagement
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Impact:
+Reduces health risks caused by air pollution
+Promotes informed and safer commuting decisions
+Encourages carpooling and public transport adoption
+Supports long-term environmental sustainability
 
-### `npm run build`
+Repository Structure:
+HACKATHON/
+│
+├── aeroway/        # Map & route optimization features
+├── backend/        # Server-side logic & chatbot
+├── frontend/       # UI components and screens
+├── public/         # Public assets
+├── src/            # Core application logic
+├── README.md       # Project documentation
+├── package.json
+└── package-lock.json
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Tech Stack
+Frontend
+React.js
+HTML, CSS, JavaScript
+Charting libraries for AQI visualization
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Backend
+Node.js
+Express.js
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+APIs & Tools
+Air Quality Data APIs
+AI chatbot integration
 
-### `npm run eject`
+Installation & Setup
+# Clone the repository
+git clone https://github.com/EktaChaudhary79/HACKATHON.git
+# Navigate to project directory
+cd HACKATHON
+# Install dependencies
+npm install
+# Start the application
+npm start
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
