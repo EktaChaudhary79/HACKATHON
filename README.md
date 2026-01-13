@@ -62,6 +62,7 @@ Enhances accessibility and user engagement
 
 
 
+
 Impact:
 
 Reduces health risks caused by air pollution
@@ -77,7 +78,6 @@ Repository Structure:
 
 HACKATHON/
 
-│
 
 ├── aeroway/        # Map & route optimization features
 
@@ -97,23 +97,21 @@ HACKATHON/
 
 
 Tech Stack
-Frontend
-React.js
-HTML, CSS, JavaScript
+
+Frontend : 
+React.js ,
+HTML, CSS, JavaScript ,
 Charting libraries for AQI visualization
 
 
-Backend
-Node.js
+Backend :
+Node.js ,
 Express.js
 
 
-APIs & Tools
-Air Quality Data APIs
+APIs & Tools :
+Air Quality Data APIs ,
 AI chatbot integration
-
-
-Installation & Setup
 
 # Clone the repository
 git clone https://github.com/EktaChaudhary79/HACKATHON.git
