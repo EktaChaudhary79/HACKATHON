@@ -61,6 +61,7 @@ Instant answers to air quality, health, and commute-related queries
 Enhances accessibility and user engagement
 
 
+
 Impact:
 
 Reduces health risks caused by air pollution
@@ -73,40 +74,42 @@ Supports long-term environmental sustainability
 
 
 Repository Structure:
+
 HACKATHON/
+
 │
+
 ├── aeroway/        # Map & route optimization features
+
 ├── backend/        # Server-side logic & chatbot
+
 ├── frontend/       # UI components and screens
+
 ├── public/         # Public assets
+
 ├── src/            # Core application logic
+
 ├── README.md       # Project documentation
+
 ├── package.json
+
 └── package-lock.json
 
 
 Tech Stack
-
 Frontend
-
 React.js
-
 HTML, CSS, JavaScript
-
 Charting libraries for AQI visualization
 
 
 Backend
-
 Node.js
-
 Express.js
 
 
 APIs & Tools
-
 Air Quality Data APIs
-
 AI chatbot integration
 
 
