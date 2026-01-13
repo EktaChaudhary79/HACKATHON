@@ -39,23 +39,38 @@ Interactive charts for analyzing air quality over time
 
 Helps users identify pollution patterns and peak hours
 
+
 ❤️ Health Profile Integration
+
 Users can define health conditions (e.g., asthma, allergies)
+
 Provides personalized warnings and recommendations based on AQI levels
 
+
 🚗 Smart Commute Suggestions
+
 Carpooling options to reduce emissions
+
 Public transport suggestions for eco-friendly travel
 
+
 🤖 AI Chatbot Assistance
+
 Instant answers to air quality, health, and commute-related queries
+
 Enhances accessibility and user engagement
 
+
 Impact:
+
 Reduces health risks caused by air pollution
+
 Promotes informed and safer commuting decisions
+
 Encourages carpooling and public transport adoption
+
 Supports long-term environmental sustainability
+
 
 Repository Structure:
 HACKATHON/
@@ -69,25 +84,46 @@ HACKATHON/
 ├── package.json
 └── package-lock.json
 
+
 Tech Stack
+
 Frontend
+
 React.js
+
 HTML, CSS, JavaScript
+
 Charting libraries for AQI visualization
 
+
 Backend
+
 Node.js
+
 Express.js
 
+
 APIs & Tools
+
 Air Quality Data APIs
+
 AI chatbot integration
 
+
 Installation & Setup
+
 # Clone the repository
 git clone https://github.com/EktaChaudhary79/HACKATHON.git
+
 # Navigate to project directory
 cd HACKATHON
+
+# Install dependencies
+npm install
+
+# Start the application
+npm start
+
 # Install dependencies
 npm install
 # Start the application
