@@ -1,25 +1,42 @@
 AeroWay – Smart Air Quality & Commute Platform
+
 AeroWay is a modern, intelligent web platform designed to help users make healthier and safer travel decisions by combining real-time air quality data, personalized health insights, and smart commute planning.
 
 🚀 Project Overview:
+
 AeroWay brings multiple essential urban mobility and environmental awareness tools into one unified platform.
+
 While existing applications handle air quality, routing, or ride-sharing separately, AeroWay integrates them seamlessly to deliver a holistic, user-centric experience.
 
+
 Why AeroWay?
+
 Most platforms today provide:
+
 ❌ Only AQI data
+
 ❌ Only navigation
+
 ❌ Only ride-sharing
+
 AeroWay combines all of them and adds intelligence through health awareness and AI, making it a unique and impactful solution for smart and sustainable cities.
 
+
 Key Features:
+
 🌫️ Real-Time Air Quality Monitoring
+
 Displays live AQI (Air Quality Index) data for selected locations
+
 Shows major pollutants and air quality categories
+
 Easy-to-understand visual indicators
 
+
 📊 Historical AQI Trends
+
 Interactive charts for analyzing air quality over time
+
 Helps users identify pollution patterns and peak hours
 
 ❤️ Health Profile Integration
