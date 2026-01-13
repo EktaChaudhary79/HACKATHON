@@ -31,7 +31,6 @@ function Navbar() {
     <>
       <nav className="navbar">
         <div className="nav-left">
-          <span className="logo">🌱</span>
           <span className="brand">AeroWay</span>
         </div>
 
