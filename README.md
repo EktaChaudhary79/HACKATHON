@@ -78,22 +78,22 @@ Repository Structure:
 
 HACKATHON/
 
+├── aeroway/         # Map & route optimization features
 
-├── aeroway/        # Map & route optimization features
+├── backend/         # Server-side logic & chatbot
 
-├── backend/        # Server-side logic & chatbot
+├── frontend/        # (Reserved) Future frontend modularization
 
-├── frontend/       # UI components and screens
+├── public/          # Frontend public assets
 
-├── public/         # Public assets
+├── src/             # Frontend core logic (React)
 
-├── src/            # Core application logic
-
-├── README.md       # Project documentation
+├── README.md        # Project documentation
 
 ├── package.json
 
 └── package-lock.json
+
 
 
 Tech Stack
