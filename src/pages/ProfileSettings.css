@@ -1,7 +1,7 @@
 .profile-page {
   min-height: 100vh;
   padding: 100px 20px;
-  background: var(--prussian-blue);
+  background: #d8ebf9;
   color: #0f172a;
   text-align: center;
 }

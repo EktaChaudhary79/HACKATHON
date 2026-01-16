@@ -6,6 +6,8 @@ import AQIHistoryScreen from "./pages/AQIHistoryScreen";
 import HealthProfileScreen from "./pages/HealthProfileScreen";
 import SmartCommuteScreen from "./pages/SmartCommuteScreen";
 import ProfileSettings from "./pages/ProfileSettings"; // ✅ ADD THIS
+import UniversityCommuteScreen from "./pages/UniversityCommuteScreen";
+
 
 import Chatbot from "./pages/Chatbot";
 
@@ -19,6 +21,7 @@ function App() {
         <Route path="/aqi-history" element={<AQIHistoryScreen />} />
         <Route path="/health-profile" element={<HealthProfileScreen />} />
         <Route path="/smart-commute" element={<SmartCommuteScreen />} />
+        <Route path="/university" element={<UniversityCommuteScreen />} />
 
         {/* ✅ PROFILE SETTINGS ROUTE */}
         <Route
