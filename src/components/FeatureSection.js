@@ -7,6 +7,7 @@ import aqiHistory from "../assets/images/aqi-history.png";
 import health from "../assets/images/health-alerts.jpg";
 import commute from "../assets/images/smart-commute.webp";
 import chatbot from "../assets/images/ai-chatbot.png";
+import unicommute from "../assets/images/unicommute.jpeg";
 
 const FeatureBlock = ({
   title,
@@ -21,8 +22,7 @@ const FeatureBlock = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    const element = ref.current; // ✅ store ref value once
-
+    const element = ref.current;
     if (!element) return;
 
     const observer = new IntersectionObserver(
@@ -36,9 +36,7 @@ const FeatureBlock = ({
 
     observer.observe(element);
 
-    return () => {
-      observer.unobserve(element); // ✅ safe cleanup
-    };
+    return () => observer.unobserve(element);
   }, []);
 
   return (
@@ -114,7 +112,7 @@ const FeatureSection = () => {
       />
 
       <FeatureBlock
-      reverse
+        reverse
         title="Smart Commute & Carpool"
         desc="Reduce emissions using carpool & public transport."
         points={[
@@ -126,8 +124,22 @@ const FeatureSection = () => {
         path="/smart-commute"
       />
 
+      {/* 🎓 UNIVERSITY CARPOOL FEATURE */}
+      <FeatureBlock
+        title="University Carpool for Students"
+        desc="Travel smarter by sharing rides with students heading to the same university."
+        points={[
+          "University-based matching",
+          "Same-route grouping",
+          "Student-only carpools",
+        ]}
+        image={unicommute}
+        path="/university"
+      />
+
       {/* AI Assistant – no Know More button */}
       <FeatureBlock
+        reverse
         title="AI Assistant"
         desc="Ask anything about AQI, health, or commute safety."
         points={[

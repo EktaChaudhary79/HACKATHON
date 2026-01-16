@@ -9,19 +9,56 @@ const AQIDashboard = () => {
   const { location: globalLocation } = useLocation();
 
   const [city, setCity] = useState("");
+  const [useCurrentLocation, setUseCurrentLocation] = useState(false);
   const [loading, setLoading] = useState(false);
   const [aqiData, setAqiData] = useState(null);
   const [error, setError] = useState("");
 
   /* =========================
      Prefill input ONLY
-     (NO auto fetch)
   ========================= */
   useEffect(() => {
-    if (globalLocation && city === "") {
+    if (globalLocation && city === "" && !useCurrentLocation) {
       setCity(globalLocation);
     }
-  }, [globalLocation, city]);
+  }, [globalLocation, city, useCurrentLocation]);
+
+  /* =========================
+     Current Location → City
+  ========================= */
+  useEffect(() => {
+    if (!useCurrentLocation) return;
+
+    if (!navigator.geolocation) {
+      setError("Geolocation not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await res.json();
+
+          const resolvedCity =
+            data.address.city ||
+            data.address.town ||
+            data.address.village ||
+            data.address.county ||
+            "";
+
+          setCity(resolvedCity);
+        } catch {
+          setError("Failed to resolve your location");
+        }
+      },
+      () => setError("Unable to access your current location")
+    );
+  }, [useCurrentLocation]);
 
   /* =========================
      Fetch AQI (ON BUTTON CLICK)
@@ -36,9 +73,7 @@ const AQIDashboard = () => {
     try {
       const res = await axios.get(
         `${API_BASE_URL}/aqi/nearest`,
-        {
-          params: { q: city }
-        }
+        { params: { q: city } }
       );
 
       const data = res.data;
@@ -90,9 +125,20 @@ const AQIDashboard = () => {
           placeholder="Enter full location (e.g. Sarojini Nagar, Delhi)"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          disabled={loading}
+          disabled={loading || useCurrentLocation}
           className="aqi-input"
         />
+
+        <label style={{ marginLeft: "10px", fontSize: "14px" }}>
+          <input
+            type="checkbox"
+            checked={useCurrentLocation}
+            onChange={() => setUseCurrentLocation((prev) => !prev)}
+            style={{ marginRight: "6px" }}
+          />
+          Use Current Location
+        </label>
+
         <button
           onClick={fetchAQI}
           disabled={loading || !city.trim()}

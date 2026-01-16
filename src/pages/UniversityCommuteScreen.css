@@ -1,0 +1,40 @@
+.university-screen {
+  padding: 30px;
+  text-align: center;
+}
+
+.university-screen h1 {
+  margin-bottom: 20px;
+}
+
+.inputs-section {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+
+.inputs-section input,
+.inputs-section select {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  min-width: 220px;
+}
+
+.inputs-section button {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: none;
+  background: #0077b6;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

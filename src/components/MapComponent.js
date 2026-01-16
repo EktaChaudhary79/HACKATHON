@@ -12,7 +12,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-/* ---------- Leaflet icon fix ---------- */
+/* ---------- Leaflet marker fix ---------- */
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
@@ -20,7 +20,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
 });
 
-/* ---------- Resize safety ---------- */
+/* ---------- Resize Fix ---------- */
 const ResizeMap = () => {
   const map = useMap();
   useEffect(() => {
@@ -29,38 +29,32 @@ const ResizeMap = () => {
   return null;
 };
 
-/* ---------- Fit bounds ---------- */
+/* ---------- Fit Bounds ---------- */
 const FitBounds = ({ start, end }) => {
   const map = useMap();
   useEffect(() => {
-    if (start && end) map.fitBounds([start, end], { padding: [50, 50] });
+    if (start && end) {
+      map.fitBounds([start, end], { padding: [50, 50] });
+    }
   }, [start, end, map]);
   return null;
 };
 
 const EMISSION_FACTOR = 0.12;
 
-const MapComponent = ({ source, destination, mode }) => {
+const MapComponent = ({ source, destination, mode, useCurrentLocation }) => {
   const [startCoords, setStartCoords] = useState(null);
   const [endCoords, setEndCoords] = useState(null);
   const [routes, setRoutes] = useState([]);
-  const [activeRouteIndex, setActiveRouteIndex] = useState(null);
-  const [bestRouteIndex, setBestRouteIndex] = useState(null);
+  const [activeRoute, setActiveRoute] = useState(null);
+  const [bestRoute, setBestRoute] = useState(null);
+  const [visibleRiders, setVisibleRiders] = useState({});
+  const [bookedRide, setBookedRide] = useState(null);
+  const [error, setError] = useState("");
 
-  // { routeId: { riderName: { seats, rider } } }
-  const [userBookings, setUserBookings] = useState({});
-  const [visibleRidersByRoute, setVisibleRidersByRoute] = useState({});
-
-  const [seatModalOpen, setSeatModalOpen] = useState(false);
-  const [selectedRider, setSelectedRider] = useState(null);
-  const [seatCount, setSeatCount] = useState(1);
-  const [toast, setToast] = useState("");
-  const [error, setError] = useState(null);
-
-  /* ---------- Toast helper ---------- */
+  /* ---------- Toast ---------- */
   const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
+    alert(msg);
   };
 
   /* ---------- Geocoding ---------- */
@@ -75,17 +69,39 @@ const MapComponent = ({ source, destination, mode }) => {
     return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
   };
 
+  /* ---------- SOURCE ---------- */
   useEffect(() => {
-    if (!source) return;
-    getCoordinates(source).then(setStartCoords).catch(() => setError("Invalid source"));
-  }, [source]);
+    setError("");
 
+    if (useCurrentLocation) {
+      if (!navigator.geolocation) {
+        setError("Geolocation not supported");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setStartCoords([pos.coords.latitude, pos.coords.longitude]);
+        },
+        () => setError("Unable to fetch current location")
+      );
+    } else if (source) {
+      getCoordinates(source)
+        .then(setStartCoords)
+        .catch(() => setError("Invalid source location"));
+    }
+  }, [source, useCurrentLocation]);
+
+  /* ---------- DESTINATION ---------- */
   useEffect(() => {
     if (!destination) return;
-    getCoordinates(destination).then(setEndCoords).catch(() => setError("Invalid destination"));
+
+    getCoordinates(destination)
+      .then(setEndCoords)
+      .catch(() => setError("Invalid destination"));
   }, [destination]);
 
-  /* ---------- Fetch routes ---------- */
+  /* ---------- ROUTES ---------- */
   useEffect(() => {
     const fetchRoutes = async () => {
       if (!startCoords || !endCoords) return;
@@ -101,11 +117,11 @@ const MapComponent = ({ source, destination, mode }) => {
           const distanceKm = r.distance / 1000;
           let carbon = distanceKm * EMISSION_FACTOR;
 
-          const carpoolsForRoute = carpoolData.filter(
+          const riders = carpoolData.filter(
             (c) => c.route === idx && c.seats > 0
           );
 
-          if (mode === "carpool" && carpoolsForRoute.length > 0) {
+          if (mode === "carpool" && riders.length > 0) {
             carbon *= 0.6;
           }
 
@@ -114,120 +130,95 @@ const MapComponent = ({ source, destination, mode }) => {
             coords: r.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
             distance: distanceKm.toFixed(2),
             carbon: carbon.toFixed(2),
-            carpools: carpoolsForRoute,
+            riders,
           };
         });
 
-        let bestIdx = 0;
+        let best = 0;
         evaluated.forEach((r, i) => {
-          if (+r.carbon < +evaluated[bestIdx].carbon) bestIdx = i;
+          if (+r.carbon < +evaluated[best].carbon) best = i;
         });
 
-        const frozen = {};
-        evaluated.forEach((route) => {
-          frozen[route.id] = [...route.carpools]
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 4);
+        const riderMap = {};
+        evaluated.forEach((r) => {
+          riderMap[r.id] = [...r.riders].slice(0, 4);
         });
 
         setRoutes(evaluated);
-        setVisibleRidersByRoute(frozen);
-        setBestRouteIndex(bestIdx);
-        setActiveRouteIndex(bestIdx);
-        setUserBookings({});
+        setVisibleRiders(riderMap);
+        setBestRoute(best);
+        setActiveRoute(best);
+        setBookedRide(null);
       } catch {
-        setError("Unable to fetch routes");
+        setError("Failed to fetch routes");
       }
     };
 
     fetchRoutes();
   }, [startCoords, endCoords, mode]);
 
-  /* ---------- Booking ---------- */
-  const openSeatModal = (rider) => {
-    // 🚫 BLOCK multiple bookings
-    if (Object.keys(userBookings).length > 0) {
-      showToast("⚠️ You have already booked a ride");
+  /* ---------- BOOK / CANCEL ---------- */
+  const handleBook = (rider) => {
+    if (bookedRide) {
+      showToast("You already booked a ride");
       return;
     }
 
-    setSelectedRider(rider);
-    setSeatCount(1);
-    setSeatModalOpen(true);
-  };
-
-  const confirmBooking = () => {
-    if (seatCount > selectedRider.seats) {
-      showToast(`Only ${selectedRider.seats} seat(s) available`);
+    if (rider.seats < 1) {
+      showToast("No seats available");
       return;
     }
 
-    const routeId = activeRouteIndex;
-
-    setVisibleRidersByRoute((prev) => ({
+    setVisibleRiders((prev) => ({
       ...prev,
-      [routeId]: prev[routeId].map((r) =>
-        r.name === selectedRider.name
-          ? { ...r, seats: r.seats - seatCount }
-          : r
+      [activeRoute]: prev[activeRoute].map((r) =>
+        r.name === rider.name ? { ...r, seats: r.seats - 1 } : r
       ),
     }));
 
-    setUserBookings((prev) => ({
-      [routeId]: {
-        [selectedRider.name]: {
-          seats: seatCount,
-          rider: selectedRider,
-        },
-      },
-    }));
-
-    setSeatModalOpen(false);
-    showToast("✅ Ride booked successfully");
+    setBookedRide({ route: activeRoute, rider: rider.name });
+    showToast("Ride booked successfully");
   };
 
-  const cancelBooking = (routeId, riderName) => {
-    const bookedSeats = userBookings[routeId][riderName].seats;
-
-    setVisibleRidersByRoute((prev) => ({
+  const handleCancel = () => {
+    setVisibleRiders((prev) => ({
       ...prev,
-      [routeId]: prev[routeId].map((r) =>
-        r.name === riderName
-          ? { ...r, seats: r.seats + bookedSeats }
-          : r
+      [bookedRide.route]: prev[bookedRide.route].map((r) =>
+        r.name === bookedRide.rider ? { ...r, seats: r.seats + 1 } : r
       ),
     }));
 
-    setUserBookings({});
-    showToast("❌ Ride cancelled");
+    setBookedRide(null);
+    showToast("Ride cancelled");
   };
-
-  const selectedRoute =
-    activeRouteIndex !== null ? routes[activeRouteIndex] : null;
 
   return (
     <div className="map-component">
       {error && <p style={{ color: "red" }}>{error}</p>}
-      {toast && <div className="toast">{toast}</div>}
 
       {startCoords && endCoords && (
-        <MapContainer center={startCoords} zoom={6} className="leaflet-container">
+        <MapContainer center={startCoords} zoom={7} className="leaflet-container">
           <ResizeMap />
           <FitBounds start={startCoords} end={endCoords} />
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-          <Marker position={startCoords}><Tooltip>Source</Tooltip></Marker>
-          <Marker position={endCoords}><Tooltip>Destination</Tooltip></Marker>
+          <Marker position={startCoords}>
+            <Tooltip>Start</Tooltip>
+          </Marker>
 
-          {routes.map((route, idx) => (
+          <Marker position={endCoords}>
+            <Tooltip>Destination</Tooltip>
+          </Marker>
+
+          {routes.map((r, idx) => (
             <Polyline
-              key={route.id}
-              positions={route.coords}
+              key={r.id}
+              positions={r.coords}
               pathOptions={{
-                color: idx === activeRouteIndex ? "green" : "#aaa",
-                weight: idx === activeRouteIndex ? 6 : 4,
+                color: idx === activeRoute ? "green" : "#aaa",
+                weight: idx === activeRoute ? 6 : 4,
               }}
-              renderer={L.canvas()}
+              eventHandlers={{ click: () => setActiveRoute(idx) }}
             />
           ))}
         </MapContainer>
@@ -235,76 +226,38 @@ const MapComponent = ({ source, destination, mode }) => {
 
       {/* ROUTE CARDS */}
       <div className="route-cards">
-        {routes.map((route, idx) => (
+        {routes.map((r, i) => (
           <div
-            key={route.id}
-            className={`route-card ${idx === activeRouteIndex ? "active" : ""}`}
-            onClick={() => setActiveRouteIndex(idx)}
+            key={r.id}
+            className={`route-card ${i === activeRoute ? "active" : ""}`}
+            onClick={() => setActiveRoute(i)}
           >
-            {idx === bestRouteIndex && <div className="best-badge">🌟 BEST ROUTE</div>}
-            <h4>Route {idx + 1}</h4>
-            <p>Distance: {route.distance} km</p>
-            <p>Carbon: {route.carbon} kg CO₂</p>
+            {i === bestRoute && <div className="best-badge">🌟 BEST</div>}
+            <h4>Route {i + 1}</h4>
+            <p>Distance: {r.distance} km</p>
+            <p>CO₂: {r.carbon} kg</p>
           </div>
         ))}
       </div>
 
-      {/* BOOKING PANEL */}
-      {mode === "carpool" && selectedRoute && (
+      {/* CARPOOL */}
+      {mode === "carpool" && activeRoute !== null && (
         <div className="booking-panel">
           <h3>🚗 Available Carpools</h3>
 
-          {visibleRidersByRoute[selectedRoute.id]?.map((c, i) => {
-            const booked =
-              userBookings[selectedRoute.id]?.[c.name];
+          {visibleRiders[activeRoute]?.map((r, i) => (
+            <div key={i} className="booking-row">
+              <span>
+                {r.name} • {r.seats} seat(s) • ⭐ {r.rating}
+              </span>
 
-            return (
-              <div key={i} className="booking-row">
-                <span>
-                  {c.name} • {c.seats} seat(s) • ⭐ {c.rating}
-                </span>
-
-                {!booked ? (
-                  <button onClick={() => openSeatModal(c)}>Book</button>
-                ) : (
-                  <button
-                    onClick={() =>
-                      cancelBooking(selectedRoute.id, c.name)
-                    }
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* SEAT MODAL */}
-      {seatModalOpen && selectedRider && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Book Seats</h3>
-            <p><strong>{selectedRider.name}</strong></p>
-
-            <input
-              type="number"
-              min="1"
-              max={selectedRider.seats}
-              value={seatCount}
-              onChange={(e) => setSeatCount(Number(e.target.value))}
-            />
-
-            <p><strong>Vehicle:</strong> {selectedRider.vehicle}</p>
-            <p><strong>Contact:</strong> {selectedRider.phone}</p>
-            <p><strong>Rating:</strong> ⭐ {selectedRider.rating}</p>
-
-            <div className="modal-buttons">
-              <button onClick={confirmBooking}>Confirm</button>
-              <button onClick={() => setSeatModalOpen(false)}>Cancel</button>
+              {!bookedRide ? (
+                <button onClick={() => handleBook(r)}>Book</button>
+              ) : bookedRide.rider === r.name ? (
+                <button onClick={handleCancel}>Cancel</button>
+              ) : null}
             </div>
-          </div>
+          ))}
         </div>
       )}
     </div>
